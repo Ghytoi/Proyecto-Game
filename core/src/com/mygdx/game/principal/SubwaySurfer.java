@@ -6,13 +6,12 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.mygdx.game.escenarios.EscenarioViasTrenes;
 import com.mygdx.game.gestion.GestionEntidadMovil;
 import com.mygdx.game.gestion.GestionEscenario;
 import com.mygdx.game.gestion.GestionObjetosRecogibles;
 import com.mygdx.game.jugador.Player;
+import com.badlogic.gdx.audio.Music;
 
 public class SubwaySurfer extends ApplicationAdapter {
     private OrthographicCamera camera;
@@ -20,13 +19,15 @@ public class SubwaySurfer extends ApplicationAdapter {
     private SpriteBatch batch;
     private BitmapFont font;
 
-    private Player tarro;
+    private Player player;
     private GestionEscenario gestionEscenario;
     private GestionEntidadMovil gestionEntidadMovil;
     private GestionObjetosRecogibles gestionObjetosRecogibles;
 
     private static final float ANCHO_MUNDO = 1920;
     private static final float ALTO_MUNDO = 1080;
+    
+    private Music musicaFondo;
 
     @Override
     public void create() {
@@ -37,18 +38,23 @@ public class SubwaySurfer extends ApplicationAdapter {
         batch = new SpriteBatch();
         font = new BitmapFont();
 
-        tarro = new Player(
+        player = new Player(
                 new Texture("bucket.png"),
                 Gdx.audio.newSound(Gdx.files.internal("hurt.ogg"))
         );
-        tarro.crear();
-
-        gestionEscenario = new GestionEscenario(new EscenarioViasTrenes(null));
+        player.crear();
+        
+        musicaFondo = Gdx.audio.newMusic(Gdx.files.internal("principalTheme.mp3"));
+        musicaFondo.setLooping(true);
+        musicaFondo.setVolume(0.3f);
+        musicaFondo.play();
+        
+        gestionEscenario = new GestionEscenario();
         gestionEntidadMovil = new GestionEntidadMovil();
 
         gestionObjetosRecogibles = new GestionObjetosRecogibles(
                 new Texture("moneda.jpg"),
-                new Texture("dropBad.png"),
+                new Texture("tren.jpg"),
                 Gdx.audio.newSound(Gdx.files.internal("drop.wav")),
                 Gdx.audio.newMusic(Gdx.files.internal("rain.mp3"))
         );
@@ -57,23 +63,26 @@ public class SubwaySurfer extends ApplicationAdapter {
 
     @Override
     public void render() {
-        ScreenUtils.clear(0, 0, 0.2f, 1);
 
         camera.update();
         batch.setProjectionMatrix(camera.combined);
 
         float delta = Gdx.graphics.getDeltaTime();
 
-        if (tarro.getVidas() > 0) {
-            tarro.actualizarEstado();
+        if (player.getVidas() > 0) {
+        	player.actualizarEstado();
 
-            if (!tarro.estaHerido()) {
-                tarro.actualizarMovimiento();
+            if (!player.estaHerido()) {
+            	player.actualizarMovimiento();
             }
 
             gestionEscenario.actualizar(delta);
             gestionEntidadMovil.actualizar(delta);
-            gestionObjetosRecogibles.actualizar(delta, tarro);
+            String destino = gestionObjetosRecogibles.actualizar(delta,player);
+
+            if (destino != null) {
+                gestionEscenario.cambiarEscenario(destino);
+            }
         }
 
         batch.begin();
@@ -81,12 +90,12 @@ public class SubwaySurfer extends ApplicationAdapter {
         gestionEscenario.dibujar(batch, ANCHO_MUNDO, ALTO_MUNDO);
         gestionEntidadMovil.dibujar(batch);
         gestionObjetosRecogibles.dibujar(batch);
-        tarro.dibujar(batch);
+        player.dibujar(batch);
 
-        font.draw(batch, "Puntos: " + tarro.getPuntos(), 20, ALTO_MUNDO - 20);
-        font.draw(batch, "Vidas: " + tarro.getVidas(), ANCHO_MUNDO - 60, ALTO_MUNDO - 20);
+        font.draw(batch, "Puntos: " + player.getPuntos(), 20, ALTO_MUNDO - 20);
+        font.draw(batch, "Vidas: " + player.getVidas(), ANCHO_MUNDO - 60, ALTO_MUNDO - 20);
 
-        if (tarro.getVidas() <= 0) {
+        if (player.getVidas() <= 0) {
             font.draw(batch, "FIN DEL JUEGO", 850, 540);
         }
 
@@ -100,8 +109,8 @@ public class SubwaySurfer extends ApplicationAdapter {
 
     @Override
     public void dispose() {
-        tarro.destruir();
-        gestionEscenario.destruir();
+    	player.destruir();
+        //gestionEscenario.destruir();
         gestionEntidadMovil.destruir();
         gestionObjetosRecogibles.destruir();
         batch.dispose();
