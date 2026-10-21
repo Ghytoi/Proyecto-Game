@@ -21,7 +21,7 @@ public class PowerUp implements ObjetoRecogible {
     
     private static final float DURACION_ESCUDO = 30f;
     private static final float DURACION_IMAN = 15f;
-    private static final float DURACION_ESTRELLA = 10f;
+    private static final float DURACION_ESTRELLA = 100f;
 
     public PowerUp(Texture textura,Tipo tipo,int multiplicador,float x,float y,float velocidad) {
         this.textura = textura;

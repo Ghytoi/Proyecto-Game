@@ -100,25 +100,25 @@ public class SubwaySurfer extends ApplicationAdapter {
         gestionObjetosRecogibles.dibujar(batch);
         player.dibujar(batch);
 
-        font.draw(batch, "Puntos: " + player.getPuntos(), 20, ALTO_MUNDO - 20);
+        font.draw(batch, "Puntos: " + player.getMonedas(), 20, ALTO_MUNDO - 20);
         font.draw(batch, "Vidas: " + player.getVidas(), ANCHO_MUNDO - 60, ALTO_MUNDO - 20);
 
         if (player.getVidas() <= 0) {
             font.draw(batch, "FIN DEL JUEGO", ANCHO_MUNDO / 2, ALTO_MUNDO / 2);
         }
         
-        fuente.draw(batch,"Puntaje: " + player.getPuntos(),20,1040);
+        fuente.draw(batch,"Puntaje: " + player.getMonedas(),20,1040);
 
         if (player.tieneEscudo()) {
-            fuente.draw(batch,"Escudo: " + String.format(java.util.Locale.US,"%.1f",player.getTiempoEscudo()) + " s",20, ALTO_MUNDO - 20);
+            fuente.draw(batch,"Escudo: " + String.format(java.util.Locale.US,"%.1f",player.getTiempoEscudo()) + " s",20, ALTO_MUNDO - 40);
         }
 
         if (player.tieneIman()) {
-            fuente.draw(batch,"Iman: " + String.format(java.util.Locale.US,"%.1f",player.getTiempoIman()) + " s",20, ALTO_MUNDO - 40);
+            fuente.draw(batch,"Iman: " + String.format(java.util.Locale.US,"%.1f",player.getTiempoIman()) + " s",20, ALTO_MUNDO - 60);
         }
 
         if (player.tieneEstrella()) {
-            fuente.draw(batch,"Estrella x" + player.getMultiplicador() + ": " + String.format(java.util.Locale.US,"%.1f",player.getTiempoEstrella()) + " s",20, ALTO_MUNDO - 60);
+            fuente.draw(batch,"Estrella x" + player.getMultiplicador() + ": " + String.format(java.util.Locale.US,"%.1f",player.getTiempoEstrella()) + " s",20, ALTO_MUNDO - 80);
         }
 
         batch.end();

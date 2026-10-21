@@ -35,7 +35,7 @@ public class Player {
     private float tiempoIman;
     private float tiempoEstrella;
 
-    private static final int MONEDAS_POR_VIDA = 10;
+    private static final int MONEDAS_POR_VIDA = 50;
 
     private static final float ANCHO_MUNDO = 1280;
     private static final float ANCHO_TARRO = 64;
@@ -93,9 +93,11 @@ public class Player {
 
     public void sumarMoneda() {
         monedas++;
+        sumarPuntos(1);
 
         if (monedas % MONEDAS_POR_VIDA == 0) {
             vidas++;
+            Gdx.app.log("¡Vida extra! Vidas: " + vidas, " | Monedas: " + monedas);
         }
     }
 
@@ -191,6 +193,7 @@ public class Player {
             tiempoEstrella -= delta;
 
             if (tiempoEstrella <= 0) {
+            	tiempoEstrella = 0;
                 estrellaActiva = false;
                 multiplicador = 1;
             }

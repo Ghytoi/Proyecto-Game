@@ -65,7 +65,7 @@ public class Monedas implements ObjetoRecogible {
         if (mala) {
             player.dañar();
         } else {
-            player.sumarPuntos(1);
+            player.sumarMoneda();
             sonido.play();
         }
     }
