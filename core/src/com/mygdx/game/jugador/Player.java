@@ -1,5 +1,4 @@
-
-package com.mygdx.game;
+package com.mygdx.game.jugador;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -9,7 +8,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 
-public class Tarro {
+public class Player {
     private Rectangle bucket;
     private Texture bucketImage;
     private Sound sonidoHerido;
@@ -30,7 +29,7 @@ public class Tarro {
     private static final float ALTO_TARRO = 64;
     private static final float ANCHO_CARRIL = ANCHO_MUNDO / 3;
 
-    public Tarro(Texture tex, Sound ss) {
+    public Player(Texture tex, Sound ss) {
         bucketImage = tex;
         sonidoHerido = ss;
     }

@@ -1,5 +1,4 @@
-
-package com.mygdx.game;
+package com.mygdx.game.principal;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -9,6 +8,11 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.mygdx.game.escenarios.EscenarioViasTrenes;
+import com.mygdx.game.gestion.GestionEntidadMovil;
+import com.mygdx.game.gestion.GestionEscenario;
+import com.mygdx.game.gestion.GestionObjetosRecogibles;
+import com.mygdx.game.jugador.Player;
 
 public class SubwaySurfer extends ApplicationAdapter {
     private OrthographicCamera camera;
@@ -16,8 +20,10 @@ public class SubwaySurfer extends ApplicationAdapter {
     private SpriteBatch batch;
     private BitmapFont font;
 
-    private Tarro tarro;
-    private Lluvia lluvia;
+    private Player tarro;
+    private GestionEscenario gestionEscenario;
+    private GestionEntidadMovil gestionEntidadMovil;
+    private GestionObjetosRecogibles gestionObjetosRecogibles;
 
     private static final float ANCHO_MUNDO = 1920;
     private static final float ALTO_MUNDO = 1080;
@@ -31,19 +37,22 @@ public class SubwaySurfer extends ApplicationAdapter {
         batch = new SpriteBatch();
         font = new BitmapFont();
 
-        tarro = new Tarro(
+        tarro = new Player(
                 new Texture("bucket.png"),
                 Gdx.audio.newSound(Gdx.files.internal("hurt.ogg"))
         );
         tarro.crear();
 
-        lluvia = new Lluvia(
-                new Texture("drop.png"),
+        gestionEscenario = new GestionEscenario(new EscenarioViasTrenes(null));
+        gestionEntidadMovil = new GestionEntidadMovil();
+
+        gestionObjetosRecogibles = new GestionObjetosRecogibles(
+                new Texture("moneda.jpg"),
                 new Texture("dropBad.png"),
                 Gdx.audio.newSound(Gdx.files.internal("drop.wav")),
                 Gdx.audio.newMusic(Gdx.files.internal("rain.mp3"))
         );
-        lluvia.crear();
+        gestionObjetosRecogibles.crear();
     }
 
     @Override
@@ -53,6 +62,8 @@ public class SubwaySurfer extends ApplicationAdapter {
         camera.update();
         batch.setProjectionMatrix(camera.combined);
 
+        float delta = Gdx.graphics.getDeltaTime();
+
         if (tarro.getVidas() > 0) {
             tarro.actualizarEstado();
 
@@ -60,16 +71,20 @@ public class SubwaySurfer extends ApplicationAdapter {
                 tarro.actualizarMovimiento();
             }
 
-            lluvia.actualizarMovimiento(tarro);
+            gestionEscenario.actualizar(delta);
+            gestionEntidadMovil.actualizar(delta);
+            gestionObjetosRecogibles.actualizar(delta, tarro);
         }
 
         batch.begin();
 
-        lluvia.dibujar(batch);
+        gestionEscenario.dibujar(batch, ANCHO_MUNDO, ALTO_MUNDO);
+        gestionEntidadMovil.dibujar(batch);
+        gestionObjetosRecogibles.dibujar(batch);
         tarro.dibujar(batch);
 
-        font.draw(batch, "Puntos: " + tarro.getPuntos(), 20, 1045);
-        font.draw(batch, "Vidas: " + tarro.getVidas(), 1750, 1045);
+        font.draw(batch, "Puntos: " + tarro.getPuntos(), 20, ALTO_MUNDO - 20);
+        font.draw(batch, "Vidas: " + tarro.getVidas(), ANCHO_MUNDO - 60, ALTO_MUNDO - 20);
 
         if (tarro.getVidas() <= 0) {
             font.draw(batch, "FIN DEL JUEGO", 850, 540);
@@ -86,7 +101,9 @@ public class SubwaySurfer extends ApplicationAdapter {
     @Override
     public void dispose() {
         tarro.destruir();
-        lluvia.destruir();
+        gestionEscenario.destruir();
+        gestionEntidadMovil.destruir();
+        gestionObjetosRecogibles.destruir();
         batch.dispose();
         font.dispose();
     }
