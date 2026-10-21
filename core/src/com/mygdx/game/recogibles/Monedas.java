@@ -25,8 +25,28 @@ public class Monedas implements ObjetoRecogible {
     }
 
     @Override
-    public void actualizar(float delta) {
+    public void actualizar(float delta,Player player) {
         area.y -= velocidad * delta;
+
+        if (!mala && player.estaAtrayendoMonedas()) {
+            float monedaX = area.x + area.width / 2;
+            float monedaY = area.y + area.height / 2;
+            float jugadorX = player.getArea().x + player.getArea().width / 2;
+            float jugadorY = player.getArea().y + player.getArea().height / 2;
+
+            if (player.atraeMonedas(monedaX,monedaY)) {
+                float dx = jugadorX - monedaX;
+                float dy = jugadorY - monedaY;
+                float distancia = (float) Math.sqrt(dx * dx + dy * dy);
+
+                if (distancia > 0) {
+                    float velocidadIman = 700 * delta;
+                    float movimiento = Math.min(velocidadIman,distancia);
+                    area.x += dx / distancia * movimiento;
+                    area.y += dy / distancia * movimiento;
+                }
+            }
+        }
     }
 
     @Override
@@ -54,9 +74,15 @@ public class Monedas implements ObjetoRecogible {
     public boolean estaFueraPantalla() {
         return area.y + area.height < 0;
     }
-
+    
     @Override
     public void destruir() {
         // Las texturas y el sonido son compartidos por el gestor.
     }
+
+	@Override
+	public void actualizar(float delta) {
+		// TODO Auto-generated method stub
+		
+	}
 }

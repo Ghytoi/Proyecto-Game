@@ -24,11 +24,13 @@ public class SubwaySurfer extends ApplicationAdapter {
     private GestionEntidadMovil gestionEntidadMovil;
     private GestionObjetosRecogibles gestionObjetosRecogibles;
 
-    private static final float ANCHO_MUNDO = 1920;
-    private static final float ALTO_MUNDO = 1080;
+    private static final float ANCHO_MUNDO = 1280;
+    private static final float ALTO_MUNDO = 720;
     
     private Music musicaFondo;
     private static final float VOLUMEN_MUSICA = 0.3f;
+    
+    private BitmapFont fuente;
 
     @Override
     public void create() {
@@ -38,6 +40,8 @@ public class SubwaySurfer extends ApplicationAdapter {
 
         batch = new SpriteBatch();
         font = new BitmapFont();
+        
+        fuente = new BitmapFont();
 
         player = new Player(
                 new Texture("bucket.png"),
@@ -60,6 +64,7 @@ public class SubwaySurfer extends ApplicationAdapter {
                 gestionEscenario
                 );
         gestionObjetosRecogibles.crear();
+        
     }
 
     @Override
@@ -99,7 +104,21 @@ public class SubwaySurfer extends ApplicationAdapter {
         font.draw(batch, "Vidas: " + player.getVidas(), ANCHO_MUNDO - 60, ALTO_MUNDO - 20);
 
         if (player.getVidas() <= 0) {
-            font.draw(batch, "FIN DEL JUEGO", 850, 540);
+            font.draw(batch, "FIN DEL JUEGO", ANCHO_MUNDO / 2, ALTO_MUNDO / 2);
+        }
+        
+        fuente.draw(batch,"Puntaje: " + player.getPuntos(),20,1040);
+
+        if (player.tieneEscudo()) {
+            fuente.draw(batch,"Escudo: " + String.format(java.util.Locale.US,"%.1f",player.getTiempoEscudo()) + " s",20, ALTO_MUNDO - 20);
+        }
+
+        if (player.tieneIman()) {
+            fuente.draw(batch,"Iman: " + String.format(java.util.Locale.US,"%.1f",player.getTiempoIman()) + " s",20, ALTO_MUNDO - 40);
+        }
+
+        if (player.tieneEstrella()) {
+            fuente.draw(batch,"Estrella x" + player.getMultiplicador() + ": " + String.format(java.util.Locale.US,"%.1f",player.getTiempoEstrella()) + " s",20, ALTO_MUNDO - 60);
         }
 
         batch.end();
@@ -120,6 +139,10 @@ public class SubwaySurfer extends ApplicationAdapter {
         if (musicaFondo != null) {
             musicaFondo.stop();
             musicaFondo.dispose();
+        }
+        
+        if (fuente != null) {
+            fuente.dispose();
         }
     }
 }

@@ -9,6 +9,7 @@ import com.mygdx.game.jugador.Player;
 import com.mygdx.game.recogibles.Monedas;
 import com.mygdx.game.recogibles.ObjetoRecogible;
 import com.mygdx.game.recogibles.TransicionRecogible;
+import com.mygdx.game.recogibles.PowerUp;
 
 public class GestionObjetosRecogibles {
 	private Array<ObjetoRecogible> objetos;
@@ -21,6 +22,12 @@ public class GestionObjetosRecogibles {
     private Texture portalCiudad;
     private Texture portalTunel;
     private Texture portalAereo;
+    
+    private Texture texturaEscudo;
+    private Texture texturaIman;
+    private Texture texturaEstrella;
+    private float tiempoPowerUp;
+    private static final float INTERVALO_POWERUP = 15f;
 
     private Sound sonido;
 
@@ -30,8 +37,8 @@ public class GestionObjetosRecogibles {
     private static final float INTERVALO_TRANSICION = 5f;
     private float velocidad = 350;
 
-    private static final float ANCHO_MUNDO = 1920;
-    private static final float ALTO_MUNDO = 1080;
+    private static final float ANCHO_MUNDO = 1280;
+    private static final float ALTO_MUNDO = 720;
     private static final float ANCHO_OBJETO = 64;
     
     private GestionEscenario gestionEscenario;
@@ -46,6 +53,10 @@ public class GestionObjetosRecogibles {
         portalCiudad = new Texture("portal_ciudad.jpg");
         portalTunel = new Texture("portal_tunel.jpg");
         portalAereo = new Texture("portal_aereo.png");
+        
+        texturaEscudo = new Texture("escudo.jpg");
+        texturaIman = new Texture("iman.png");
+        texturaEstrella = new Texture("estrella.png");
         
 
         objetos = new Array<ObjetoRecogible>();
@@ -124,7 +135,12 @@ public class GestionObjetosRecogibles {
 
         tiempoGeneracion += delta;
         tiempoTransicion += delta;
+        tiempoPowerUp += delta;
 
+        if (tiempoPowerUp >= INTERVALO_POWERUP) {
+            crearPowerUp();
+        }
+        
         if (tiempoGeneracion >= tiempoEntreObjetos) {
             crearMoneda();
         }
@@ -136,7 +152,11 @@ public class GestionObjetosRecogibles {
 
         for (int i = objetos.size - 1; i >= 0; i--) {
             ObjetoRecogible objeto = objetos.get(i);
-            objeto.actualizar(delta);
+            if (objeto instanceof Monedas) {
+                ((Monedas) objeto).actualizar(delta,player);
+            } else {
+                objeto.actualizar(delta);
+            }
 
             if (objeto.getArea().overlaps(player.getArea())) {
                 objeto.recoger(player);
@@ -174,6 +194,39 @@ public class GestionObjetosRecogibles {
             transicion.dibujar(batch);
         }
     }
+    
+    private void crearPowerUp() {
+        int carril = MathUtils.random(0,2);
+        float anchoCarril = ANCHO_MUNDO / 3;
+        float x = carril * anchoCarril + (anchoCarril - ANCHO_OBJETO) / 2;
+        int tipo = MathUtils.random(0,3);
+        PowerUp powerUp;
+
+        if (tipo == 0) {
+            powerUp = new PowerUp(texturaEscudo,PowerUp.Tipo.ESCUDO,1,x,ALTO_MUNDO,velocidad);
+        } else if (tipo == 1) {
+            powerUp = new PowerUp(texturaIman,PowerUp.Tipo.IMAN,1,x,ALTO_MUNDO,velocidad);
+        } else {
+            int[] multiplicadores = {2,4,8,16};
+            int multiplicador = multiplicadores[MathUtils.random(0,3)];
+            powerUp = new PowerUp(texturaEstrella,PowerUp.Tipo.ESTRELLA,multiplicador,x,ALTO_MUNDO,velocidad);
+        }
+
+        objetos.add(powerUp);
+        tiempoPowerUp = 0;
+    }
+    
+    public void reiniciarObjetos() {
+        for (ObjetoRecogible objeto : objetos) {
+            objeto.destruir();
+        }
+
+        objetos.clear();
+        transiciones.clear();
+
+        tiempoGeneracion = 0;
+        tiempoTransicion = 0;
+    }
 
 
 	public void destruir() {
@@ -206,18 +259,9 @@ public class GestionObjetosRecogibles {
 	    if (portalAereo != null) {
 	        portalAereo.dispose();
 	    }
+	    
+	    texturaEscudo.dispose();
+	    texturaIman.dispose();
+	    texturaEstrella.dispose();
 	}
-
-    
-    public void reiniciarObjetos() {
-        for (ObjetoRecogible objeto : objetos) {
-            objeto.destruir();
-        }
-
-        objetos.clear();
-        transiciones.clear();
-
-        tiempoGeneracion = 0;
-        tiempoTransicion = 0;
-    }
 }

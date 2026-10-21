@@ -6,6 +6,7 @@ import com.mygdx.game.jugador.Player;
 
 public interface ObjetoRecogible {
     void actualizar(float delta);
+    void actualizar(float delta,Player player);
     void dibujar(SpriteBatch batch);
     Rectangle getArea();
     void recoger(Player player);
