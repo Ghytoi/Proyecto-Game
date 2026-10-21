@@ -1,3 +1,4 @@
+
 package com.mygdx.game.gestion;
 
 import com.badlogic.gdx.utils.Array;
@@ -35,11 +36,15 @@ public class GestionEntidadMovil {
         }
     }
 
-    public void destruir() {
+    public void reiniciarObjetos() {
         for (EntidadMovil entidad : entidades) {
             entidad.destruir();
         }
 
         entidades.clear();
+    }
+
+    public void destruir() {
+        reiniciarObjetos();
     }
 }

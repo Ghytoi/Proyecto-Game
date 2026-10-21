@@ -28,6 +28,7 @@ public class SubwaySurfer extends ApplicationAdapter {
     private static final float ALTO_MUNDO = 1080;
     
     private Music musicaFondo;
+    private static final float VOLUMEN_MUSICA = 0.3f;
 
     @Override
     public void create() {
@@ -46,7 +47,7 @@ public class SubwaySurfer extends ApplicationAdapter {
         
         musicaFondo = Gdx.audio.newMusic(Gdx.files.internal("principalTheme.mp3"));
         musicaFondo.setLooping(true);
-        musicaFondo.setVolume(0.3f);
+        musicaFondo.setVolume(VOLUMEN_MUSICA);
         musicaFondo.play();
         
         gestionEscenario = new GestionEscenario();
@@ -56,8 +57,8 @@ public class SubwaySurfer extends ApplicationAdapter {
                 new Texture("moneda.jpg"),
                 new Texture("tren.jpg"),
                 Gdx.audio.newSound(Gdx.files.internal("drop.wav")),
-                Gdx.audio.newMusic(Gdx.files.internal("rain.mp3"))
-        );
+                gestionEscenario
+                );
         gestionObjetosRecogibles.crear();
     }
 
@@ -82,6 +83,8 @@ public class SubwaySurfer extends ApplicationAdapter {
 
             if (destino != null) {
                 gestionEscenario.cambiarEscenario(destino);
+                gestionObjetosRecogibles.reiniciarObjetos();
+                gestionEntidadMovil.reiniciarObjetos();
             }
         }
 
@@ -110,10 +113,13 @@ public class SubwaySurfer extends ApplicationAdapter {
     @Override
     public void dispose() {
     	player.destruir();
-        //gestionEscenario.destruir();
         gestionEntidadMovil.destruir();
         gestionObjetosRecogibles.destruir();
         batch.dispose();
         font.dispose();
+        if (musicaFondo != null) {
+            musicaFondo.stop();
+            musicaFondo.dispose();
+        }
     }
 }

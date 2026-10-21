@@ -61,6 +61,20 @@ public class GestionEscenario implements Disposable {
             actual.render(batch, ancho, alto);
         }
     }
+    
+    public String getNombreEscenarioActual() {
+        if (actual == vias) {
+            return "VIAS";
+        } else if (actual == ciudad) {
+            return "CIUDAD";
+        } else if (actual == tunel) {
+            return "TUNEL";
+        } else if (actual == aereo) {
+            return "AEREO";
+        }
+
+        return "";
+    }
 
     @Override
     public void dispose() {
