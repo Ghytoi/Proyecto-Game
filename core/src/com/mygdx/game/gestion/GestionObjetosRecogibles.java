@@ -8,56 +8,54 @@ import com.badlogic.gdx.utils.Array;
 import com.mygdx.game.jugador.Player;
 import com.mygdx.game.recogibles.Monedas;
 import com.mygdx.game.recogibles.ObjetoRecogible;
-import com.mygdx.game.recogibles.TransicionRecogible;
 import com.mygdx.game.recogibles.PowerUp;
+import com.mygdx.game.recogibles.TransicionRecogible;
 
 public class GestionObjetosRecogibles {
-	private Array<ObjetoRecogible> objetos;
-    private Array<TransicionRecogible> transiciones;
-
-    private Texture texturaBuena;
-    private Texture texturaMala;
-    
-    private Texture portalVias;
-    private Texture portalCiudad;
-    private Texture portalTunel;
-    private Texture portalAereo;
-    
-    private Texture texturaEscudo;
-    private Texture texturaIman;
-    private Texture texturaEstrella;
-    private float tiempoPowerUp;
-    private static final float INTERVALO_POWERUP = 15f;
-
-    private Sound sonido;
-
-    private float tiempoGeneracion;
-    private float tiempoTransicion;
-    private float tiempoEntreObjetos = 0.8f;
-    private static final float INTERVALO_TRANSICION = 5f;
-    private float velocidad = 350;
-
     private static final float ANCHO_MUNDO = 1280;
     private static final float ALTO_MUNDO = 720;
     private static final float ANCHO_OBJETO = 64;
-    
-    private GestionEscenario gestionEscenario;
+    private static final float INTERVALO_POWERUP = 15f;
+    private static final float INTERVALO_TRANSICION = 5f;
+    private static final float TIEMPO_ENTRE_OBJETOS = 0.8f;
 
-    public GestionObjetosRecogibles(Texture texturaBuena,Texture texturaMala,Sound sonido, GestionEscenario gestionEscenario) {
-        this.texturaBuena = texturaBuena;
-        this.texturaMala = texturaMala;
-        this.sonido = sonido;
+    private final Array<ObjetoRecogible> objetos;
+    private final Array<TransicionRecogible> transiciones;
+
+    // Recursos que vienen de fuera: los libera quien los creo (SubwaySurfer).
+    private final Texture texturaMoneda;
+    private final Sound sonidoMoneda;
+
+    // Recursos propios: los libera esta clase en destruir().
+    private final Texture portalVias;
+    private final Texture portalCiudad;
+    private final Texture portalTunel;
+    private final Texture portalAereo;
+    private final Texture texturaEscudo;
+    private final Texture texturaIman;
+    private final Texture texturaEstrella;
+
+    private final GestionEscenario gestionEscenario;
+    private final float velocidad;
+
+    private float tiempoGeneracion;
+    private float tiempoTransicion;
+    private float tiempoPowerUp;
+
+    public GestionObjetosRecogibles(Texture texturaMoneda, Sound sonidoMoneda, GestionEscenario gestionEscenario, float velocidad) {
+        this.texturaMoneda = texturaMoneda;
+        this.sonidoMoneda = sonidoMoneda;
         this.gestionEscenario = gestionEscenario;
+        this.velocidad = velocidad;
 
         portalVias = new Texture("portal_vias.png");
         portalCiudad = new Texture("portal_ciudad.jpg");
         portalTunel = new Texture("portal_tunel.jpg");
         portalAereo = new Texture("portal_aereo.png");
-        
+
         texturaEscudo = new Texture("escudo.jpg");
         texturaIman = new Texture("iman.png");
         texturaEstrella = new Texture("estrella.png");
-        
 
         objetos = new Array<ObjetoRecogible>();
         transiciones = new Array<TransicionRecogible>();
@@ -67,60 +65,54 @@ public class GestionObjetosRecogibles {
         crearMoneda();
     }
 
-    private void crearMoneda() {
-        int carril = MathUtils.random(0,2);
+    private float calcularXCarril(int carril) {
         float anchoCarril = ANCHO_MUNDO / 3;
-        float x = carril * anchoCarril + (anchoCarril - ANCHO_OBJETO) / 2;
-        boolean mala = MathUtils.random(0,1) == 1;
+        return carril * anchoCarril + (anchoCarril - ANCHO_OBJETO) / 2;
+    }
 
-        objetos.add(new Monedas(texturaBuena,texturaMala,sonido,mala,x,ALTO_MUNDO,velocidad));
+    private void crearMoneda() {
+        int carril = MathUtils.random(0, 2);
+        boolean mala = false; 
+        /* Se deja como false para que no aparezca nunca, 
+        aunque se está investigando como eliminar correctamente
+		*/
+        objetos.add(new Monedas(texturaMoneda, sonidoMoneda, mala, calcularXCarril(carril), ALTO_MUNDO, velocidad));
         tiempoGeneracion = 0;
     }
 
+    private Texture texturaDePortal(String destino) {
+        if ("VIAS".equals(destino)) return portalVias;
+        if ("CIUDAD".equals(destino)) return portalCiudad;
+        if ("TUNEL".equals(destino)) return portalTunel;
+        if ("AEREO".equals(destino)) return portalAereo;
+        return null;
+    }
 
-	private void crearTransicion(String escenarioActual) {
-	    int carril = MathUtils.random(0,2);
-	    float anchoCarril = ANCHO_MUNDO / 3;
-	    float x = carril * anchoCarril + (anchoCarril - ANCHO_OBJETO) / 2;
-	
-	    Array<String> destinos = new Array<String>();
-	
-	    destinos.add("VIAS");
-	    destinos.add("CIUDAD");
-	    destinos.add("TUNEL");
-	    destinos.add("AEREO");
-	
-	    for (int i = destinos.size - 1; i >= 0; i--) {
-	        if (destinos.get(i).equals(escenarioActual)) {
-	            destinos.removeIndex(i);
-	        }
-	    }
-	
-	    String destino = destinos.random();
-	    Texture texturaPortal;
-	
-	    switch (destino) {
-	        case "VIAS":
-	            texturaPortal = portalVias;
-	            break;
-	        case "CIUDAD":
-	            texturaPortal = portalCiudad;
-	            break;
-	        case "TUNEL":
-	            texturaPortal = portalTunel;
-	            break;
-	        case "AEREO":
-	            texturaPortal = portalAereo;
-	            break;
-	        default:
-	            return;
-	    }
-	
-	    transiciones.add(new TransicionRecogible(texturaPortal,x,ALTO_MUNDO,ANCHO_OBJETO,100,velocidad,destino));
-	
-	    tiempoTransicion = 0;
-	}
+    private void crearTransicion(String escenarioActual) {
+        int carril = MathUtils.random(0, 2);
 
+        Array<String> destinos = new Array<String>();
+        destinos.add("VIAS");
+        destinos.add("CIUDAD");
+        destinos.add("TUNEL");
+        destinos.add("AEREO");
+
+        for (int i = destinos.size - 1; i >= 0; i--) {
+            if (destinos.get(i).equals(escenarioActual)) {
+                destinos.removeIndex(i);
+            }
+        }
+
+        String destino = destinos.random();
+        Texture texturaPortal = texturaDePortal(destino);
+
+        if (texturaPortal == null) {
+            return;
+        }
+
+        transiciones.add(new TransicionRecogible(texturaPortal, calcularXCarril(carril), ALTO_MUNDO, ANCHO_OBJETO, 100, velocidad, destino));
+        tiempoTransicion = 0;
+    }
 
     public void agregar(ObjetoRecogible objeto) {
         if (objeto != null) {
@@ -128,7 +120,7 @@ public class GestionObjetosRecogibles {
         }
     }
 
-    public String actualizar(float delta,Player player) {
+    public String actualizar(float delta, Player player) {
         if (player.getVidas() <= 0) {
             return null;
         }
@@ -140,23 +132,18 @@ public class GestionObjetosRecogibles {
         if (tiempoPowerUp >= INTERVALO_POWERUP) {
             crearPowerUp();
         }
-        
-        if (tiempoGeneracion >= tiempoEntreObjetos) {
+
+        if (tiempoGeneracion >= TIEMPO_ENTRE_OBJETOS) {
             crearMoneda();
         }
 
         if (tiempoTransicion >= INTERVALO_TRANSICION && transiciones.size == 0) {
-            String escenarioActual = gestionEscenario.getNombreEscenarioActual();
-            crearTransicion(escenarioActual);
+            crearTransicion(gestionEscenario.getNombreEscenarioActual());
         }
 
         for (int i = objetos.size - 1; i >= 0; i--) {
             ObjetoRecogible objeto = objetos.get(i);
-            if (objeto instanceof Monedas) {
-                ((Monedas) objeto).actualizar(delta,player);
-            } else {
-                objeto.actualizar(delta);
-            }
+            objeto.actualizar(delta, player);
 
             if (objeto.getArea().overlaps(player.getArea())) {
                 objeto.recoger(player);
@@ -194,28 +181,26 @@ public class GestionObjetosRecogibles {
             transicion.dibujar(batch);
         }
     }
-    
+
     private void crearPowerUp() {
-        int carril = MathUtils.random(0,2);
-        float anchoCarril = ANCHO_MUNDO / 3;
-        float x = carril * anchoCarril + (anchoCarril - ANCHO_OBJETO) / 2;
-        int tipo = MathUtils.random(0,3);
+        float x = calcularXCarril(MathUtils.random(0, 2));
+        int tipo = MathUtils.random(0, 2);   // 0 escudo, 1 iman, 2 estrella (1/3 cada uno)
         PowerUp powerUp;
 
         if (tipo == 0) {
-            powerUp = new PowerUp(texturaEscudo,PowerUp.Tipo.ESCUDO,1,x,ALTO_MUNDO,velocidad);
+            powerUp = new PowerUp(texturaEscudo, PowerUp.Tipo.ESCUDO, 1, x, ALTO_MUNDO, velocidad);
         } else if (tipo == 1) {
-            powerUp = new PowerUp(texturaIman,PowerUp.Tipo.IMAN,1,x,ALTO_MUNDO,velocidad);
+            powerUp = new PowerUp(texturaIman, PowerUp.Tipo.IMAN, 1, x, ALTO_MUNDO, velocidad);
         } else {
-            int[] multiplicadores = {2,4,8,16};
-            int multiplicador = multiplicadores[MathUtils.random(0,3)];
-            powerUp = new PowerUp(texturaEstrella,PowerUp.Tipo.ESTRELLA,multiplicador,x,ALTO_MUNDO,velocidad);
+            int[] multiplicadores = {2, 4, 8, 16};
+            int multiplicador = multiplicadores[MathUtils.random(0, multiplicadores.length - 1)];
+            powerUp = new PowerUp(texturaEstrella, PowerUp.Tipo.ESTRELLA, multiplicador, x, ALTO_MUNDO, velocidad);
         }
 
         objetos.add(powerUp);
         tiempoPowerUp = 0;
     }
-    
+
     public void reiniciarObjetos() {
         for (ObjetoRecogible objeto : objetos) {
             objeto.destruir();
@@ -226,42 +211,19 @@ public class GestionObjetosRecogibles {
 
         tiempoGeneracion = 0;
         tiempoTransicion = 0;
+        tiempoPowerUp = 0;
     }
 
+    public void destruir() {
+        reiniciarObjetos();
 
-	public void destruir() {
-	    reiniciarObjetos();
-	
-	    if (sonido != null) {
-	        sonido.dispose();
-	    }
-	
-	    if (texturaBuena != null) {
-	        texturaBuena.dispose();
-	    }
-	
-	    if (texturaMala != null) {
-	        texturaMala.dispose();
-	    }
-	
-	    if (portalVias != null) {
-	        portalVias.dispose();
-	    }
-	
-	    if (portalCiudad != null) {
-	        portalCiudad.dispose();
-	    }
-	
-	    if (portalTunel != null) {
-	        portalTunel.dispose();
-	    }
-	
-	    if (portalAereo != null) {
-	        portalAereo.dispose();
-	    }
-	    
-	    texturaEscudo.dispose();
-	    texturaIman.dispose();
-	    texturaEstrella.dispose();
-	}
+        portalVias.dispose();
+        portalCiudad.dispose();
+        portalTunel.dispose();
+        portalAereo.dispose();
+
+        texturaEscudo.dispose();
+        texturaIman.dispose();
+        texturaEstrella.dispose();
+    }
 }

@@ -2,18 +2,39 @@ package com.mygdx.game.principal;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.mygdx.game.entidades.Auto;
+import com.mygdx.game.entidades.AutoBus;
+import com.mygdx.game.entidades.Avion;
+import com.mygdx.game.entidades.BandadaDePajaros;
+import com.mygdx.game.entidades.VagonesDeTrenes;
 import com.mygdx.game.gestion.GestionEntidadMovil;
 import com.mygdx.game.gestion.GestionEscenario;
 import com.mygdx.game.gestion.GestionObjetosRecogibles;
 import com.mygdx.game.jugador.Player;
-import com.badlogic.gdx.audio.Music;
 
 public class SubwaySurfer extends ApplicationAdapter {
+    private static final float ANCHO_MUNDO = 1280f;
+    private static final float ALTO_MUNDO = 720f;
+    private static final float VOLUMEN_MUSICA = 0.3f;
+    private static final float VELOCIDAD_MUNDO = 300f;   // misma velocidad para obstaculos y recogibles
+    private static final float INTERVALO_MINIMO = 0.8f;
+    private static final float INTERVALO_MAXIMO = 2.0f;
+    private static final float ANCHO_ENTIDAD = 100f;
+    private static final float ALTO_ENTIDAD = 100f;
+    private static final float ALTO_VAGON = 180f;
+
+    private float tiempoProximaEntidad = 0.1f;
+
     private OrthographicCamera camera;
     private FitViewport viewport;
     private SpriteBatch batch;
@@ -23,14 +44,15 @@ public class SubwaySurfer extends ApplicationAdapter {
     private GestionEscenario gestionEscenario;
     private GestionEntidadMovil gestionEntidadMovil;
     private GestionObjetosRecogibles gestionObjetosRecogibles;
-
-    private static final float ANCHO_MUNDO = 1280;
-    private static final float ALTO_MUNDO = 720;
-    
     private Music musicaFondo;
-    private static final float VOLUMEN_MUSICA = 0.3f;
-    
-    private BitmapFont fuente;
+    private Sound sonidoMoneda;
+
+    private Texture texturaAuto;
+    private Texture texturaAutobus;
+    private Texture texturaAvion;
+    private Texture texturaPajaros;
+    private Texture texturaMoneda;
+    private Texture texturaVagon;
 
     @Override
     public void create() {
@@ -40,59 +62,85 @@ public class SubwaySurfer extends ApplicationAdapter {
 
         batch = new SpriteBatch();
         font = new BitmapFont();
-        
-        fuente = new BitmapFont();
 
         player = new Player(
-                new Texture("bucket.png"),
-                Gdx.audio.newSound(Gdx.files.internal("hurt.ogg"))
+            new Texture("player.jpg"),
+            Gdx.audio.newSound(Gdx.files.internal("hurt.ogg"))
         );
         player.crear();
-        
+
         musicaFondo = Gdx.audio.newMusic(Gdx.files.internal("principalTheme.mp3"));
         musicaFondo.setLooping(true);
         musicaFondo.setVolume(VOLUMEN_MUSICA);
         musicaFondo.play();
-        
+
         gestionEscenario = new GestionEscenario();
         gestionEntidadMovil = new GestionEntidadMovil();
 
+        texturaAuto = new Texture("auto.jpg");
+        texturaAutobus = new Texture("autobus.jpg");
+        texturaAvion = new Texture("avion.jpg");
+        texturaPajaros = new Texture("pajaros.jpg");
+        texturaMoneda = new Texture("moneda.jpg");
+        texturaVagon = new Texture("vagon.jpg");
+        sonidoMoneda = Gdx.audio.newSound(Gdx.files.internal("drop.wav"));
+
         gestionObjetosRecogibles = new GestionObjetosRecogibles(
-                new Texture("moneda.jpg"),
-                new Texture("tren.jpg"),
-                Gdx.audio.newSound(Gdx.files.internal("drop.wav")),
-                gestionEscenario
-                );
+            texturaMoneda,
+            sonidoMoneda,
+            gestionEscenario,
+            VELOCIDAD_MUNDO
+        );
         gestionObjetosRecogibles.crear();
-        
+
+        crearEntidadesEscenario();
+    }
+
+    private float calcularXCentroCarril(int carril, float anchoEntidad) {
+        float anchoCarril = ANCHO_MUNDO / 3f;
+        return carril * anchoCarril + (anchoCarril - anchoEntidad) / 2f;
+    }
+
+    private void crearEntidadesEscenario() {
+        gestionEntidadMovil.reiniciar();
+        tiempoProximaEntidad = 0f;
+    }
+
+    private void reiniciarJuego() {
+        player.reiniciar();
+        gestionEscenario.cambiarEscenario("VIAS");
+        gestionObjetosRecogibles.reiniciarObjetos();
+        crearEntidadesEscenario();
     }
 
     @Override
     public void render() {
+        float delta = Gdx.graphics.getDeltaTime();
 
         camera.update();
         batch.setProjectionMatrix(camera.combined);
 
-        float delta = Gdx.graphics.getDeltaTime();
-
         if (player.getVidas() > 0) {
-        	player.actualizarEstado();
-
-            if (!player.estaHerido()) {
-            	player.actualizarMovimiento();
-            }
+            player.actualizarEstado();
+            player.actualizarMovimiento();
 
             gestionEscenario.actualizar(delta);
             gestionEntidadMovil.actualizar(delta);
-            String destino = gestionObjetosRecogibles.actualizar(delta,player);
+            gestionEntidadMovil.comprobarColisiones(player);
+            actualizarGeneracionEntidades(delta);
+
+            String destino = gestionObjetosRecogibles.actualizar(delta, player);
 
             if (destino != null) {
                 gestionEscenario.cambiarEscenario(destino);
                 gestionObjetosRecogibles.reiniciarObjetos();
-                gestionEntidadMovil.reiniciarObjetos();
+                crearEntidadesEscenario();
             }
+        } else if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+            reiniciarJuego();
         }
 
+        ScreenUtils.clear(0f, 0f, 0f, 1f);
         batch.begin();
 
         gestionEscenario.dibujar(batch, ANCHO_MUNDO, ALTO_MUNDO);
@@ -100,25 +148,45 @@ public class SubwaySurfer extends ApplicationAdapter {
         gestionObjetosRecogibles.dibujar(batch);
         player.dibujar(batch);
 
-        font.draw(batch, "Puntos: " + player.getMonedas(), 20, ALTO_MUNDO - 20);
-        font.draw(batch, "Vidas: " + player.getVidas(), ANCHO_MUNDO - 60, ALTO_MUNDO - 20);
-
-        if (player.getVidas() <= 0) {
-            font.draw(batch, "FIN DEL JUEGO", ANCHO_MUNDO / 2, ALTO_MUNDO / 2);
-        }
-        
-        fuente.draw(batch,"Puntaje: " + player.getMonedas(),20,1040);
+        font.draw(batch, "Puntos: " + player.getPuntos(), 20f, ALTO_MUNDO - 20f);
+        font.draw(batch, "Monedas: " + player.getMonedas(), 20f, ALTO_MUNDO - 40f);
+        font.draw(batch, "Vidas: " + player.getVidas(), ANCHO_MUNDO - 100f, ALTO_MUNDO - 20f);
 
         if (player.tieneEscudo()) {
-            fuente.draw(batch,"Escudo: " + String.format(java.util.Locale.US,"%.1f",player.getTiempoEscudo()) + " s",20, ALTO_MUNDO - 40);
+            font.draw(
+                batch,
+                String.format(java.util.Locale.US, "Escudo: %.1f s", player.getTiempoEscudo()),
+                20f,
+                ALTO_MUNDO - 60f
+            );
         }
 
         if (player.tieneIman()) {
-            fuente.draw(batch,"Iman: " + String.format(java.util.Locale.US,"%.1f",player.getTiempoIman()) + " s",20, ALTO_MUNDO - 60);
+            font.draw(
+                batch,
+                String.format(java.util.Locale.US, "Iman: %.1f s", player.getTiempoIman()),
+                20f,
+                ALTO_MUNDO - 80f
+            );
         }
 
         if (player.tieneEstrella()) {
-            fuente.draw(batch,"Estrella x" + player.getMultiplicador() + ": " + String.format(java.util.Locale.US,"%.1f",player.getTiempoEstrella()) + " s",20, ALTO_MUNDO - 80);
+            font.draw(
+                batch,
+                String.format(
+                    java.util.Locale.US,
+                    "Multiplicador x%d: %.1f s",
+                    player.getMultiplicador(),
+                    player.getTiempoEstrella()
+                ),
+                20f,
+                ALTO_MUNDO - 100f
+            );
+        }
+
+        if (player.getVidas() <= 0) {
+            font.draw(batch, "FIN DEL JUEGO", ANCHO_MUNDO / 2f - 70f, ALTO_MUNDO / 2f);
+            font.draw(batch, "Presiona ENTER para reiniciar", ANCHO_MUNDO / 2f - 100f, ALTO_MUNDO / 2f - 30f);
         }
 
         batch.end();
@@ -129,20 +197,80 @@ public class SubwaySurfer extends ApplicationAdapter {
         viewport.update(width, height, true);
     }
 
+    private void generarEntidadAleatoria() {
+        String escenario = gestionEscenario.getNombreEscenarioActual();
+        int carril = MathUtils.random(0, 2);
+        float x = calcularXCentroCarril(carril, ANCHO_ENTIDAD);
+
+        switch (escenario) {
+            case "VIAS":
+                gestionEntidadMovil.agregar(
+                    new VagonesDeTrenes(texturaVagon, x, ALTO_MUNDO, ANCHO_ENTIDAD, ALTO_VAGON, VELOCIDAD_MUNDO)
+                );
+                break;
+
+            case "CIUDAD":
+            case "TUNEL":
+                if (MathUtils.randomBoolean()) {
+                    gestionEntidadMovil.agregar(
+                        new Auto(texturaAuto, x, ALTO_MUNDO, ANCHO_ENTIDAD, ALTO_ENTIDAD, VELOCIDAD_MUNDO)
+                    );
+                } else {
+                    gestionEntidadMovil.agregar(
+                        new AutoBus(texturaAutobus, x, ALTO_MUNDO, ANCHO_ENTIDAD, ALTO_ENTIDAD, VELOCIDAD_MUNDO)
+                    );
+                }
+                break;
+
+            case "AEREO":
+                if (MathUtils.randomBoolean()) {
+                    gestionEntidadMovil.agregar(
+                        new Avion(texturaAvion, x, ALTO_MUNDO, ANCHO_ENTIDAD, ALTO_ENTIDAD, VELOCIDAD_MUNDO)
+                    );
+                } else {
+                    gestionEntidadMovil.agregar(
+                        new BandadaDePajaros(texturaPajaros, x, ALTO_MUNDO, ANCHO_ENTIDAD, ALTO_ENTIDAD, VELOCIDAD_MUNDO)
+                    );
+                }
+                break;
+
+            default:
+                Gdx.app.error("SubwaySurfer", "Escenario desconocido: " + escenario);
+                break;
+        }
+    }
+
+    private void actualizarGeneracionEntidades(float delta) {
+        tiempoProximaEntidad -= delta;
+
+        if (tiempoProximaEntidad <= 0f) {
+            generarEntidadAleatoria();
+            tiempoProximaEntidad = MathUtils.random(INTERVALO_MINIMO, INTERVALO_MAXIMO);
+        }
+    }
+
     @Override
     public void dispose() {
-    	player.destruir();
-        gestionEntidadMovil.destruir();
-        gestionObjetosRecogibles.destruir();
-        batch.dispose();
-        font.dispose();
+        if (player != null) player.destruir();
+        if (gestionEntidadMovil != null) gestionEntidadMovil.destruir();
+        if (gestionObjetosRecogibles != null) gestionObjetosRecogibles.destruir();
+        if (gestionEscenario != null) gestionEscenario.dispose();
+
         if (musicaFondo != null) {
             musicaFondo.stop();
             musicaFondo.dispose();
         }
-        
-        if (fuente != null) {
-            fuente.dispose();
-        }
+
+        if (sonidoMoneda != null) sonidoMoneda.dispose();
+
+        if (texturaAuto != null) texturaAuto.dispose();
+        if (texturaAutobus != null) texturaAutobus.dispose();
+        if (texturaAvion != null) texturaAvion.dispose();
+        if (texturaPajaros != null) texturaPajaros.dispose();
+        if (texturaMoneda != null) texturaMoneda.dispose();
+        if (texturaVagon != null) texturaVagon.dispose();
+
+        if (font != null) font.dispose();
+        if (batch != null) batch.dispose();
     }
 }

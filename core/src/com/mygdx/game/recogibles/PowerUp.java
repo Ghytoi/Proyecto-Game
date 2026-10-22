@@ -1,4 +1,3 @@
-
 package com.mygdx.game.recogibles;
 
 import com.badlogic.gdx.graphics.Texture;
@@ -8,9 +7,7 @@ import com.mygdx.game.jugador.Player;
 
 public class PowerUp implements ObjetoRecogible {
     public enum Tipo {
-        ESCUDO,
-        IMAN,
-        ESTRELLA
+        ESCUDO, IMAN, ESTRELLA
     }
 
     private final Rectangle area;
@@ -18,17 +15,26 @@ public class PowerUp implements ObjetoRecogible {
     private final Tipo tipo;
     private final int multiplicador;
     private final float velocidad;
-    
-    private static final float DURACION_ESCUDO = 30f;
-    private static final float DURACION_IMAN = 15f;
-    private static final float DURACION_ESTRELLA = 100f;
 
-    public PowerUp(Texture textura,Tipo tipo,int multiplicador,float x,float y,float velocidad) {
+    public PowerUp(Texture textura, Tipo tipo, int multiplicador, float x, float y, float velocidad) {
         this.textura = textura;
         this.tipo = tipo;
         this.multiplicador = multiplicador;
         this.velocidad = velocidad;
-        area = new Rectangle(x,y,64,64);
+        this.area = new Rectangle(x, y, 64, 64);
+    }
+
+    public static float getDuracion(Tipo tipo) {
+        switch (tipo) {
+            case ESCUDO:
+                return 30f;
+            case IMAN:
+                return 15f;
+            case ESTRELLA:
+                return 10f;
+            default:
+                return 0f;
+        }
     }
 
     @Override
@@ -37,13 +43,20 @@ public class PowerUp implements ObjetoRecogible {
     }
 
     @Override
+    public void actualizar(float delta, Player player) {
+        actualizar(delta);
+    }
+
+    @Override
     public void dibujar(SpriteBatch batch) {
-        batch.draw(textura,area.x,area.y,area.width,area.height);
+        if (textura != null) {
+            batch.draw(textura, area.x, area.y, area.width, area.height);
+        }
     }
 
     @Override
     public Rectangle getArea() {
-        return area;
+        return new Rectangle(area);
     }
 
     @Override
@@ -60,19 +73,6 @@ public class PowerUp implements ObjetoRecogible {
                 break;
         }
     }
-    
-    public static float getDuracion(Tipo tipo) {
-        switch (tipo) {
-            case ESCUDO:
-                return DURACION_ESCUDO;
-            case IMAN:
-                return DURACION_IMAN;
-            case ESTRELLA:
-                return DURACION_ESTRELLA;
-            default:
-                return 0;
-        }
-    }
 
     @Override
     public boolean estaFueraPantalla() {
@@ -81,12 +81,6 @@ public class PowerUp implements ObjetoRecogible {
 
     @Override
     public void destruir() {
-        // La textura es compartida y la libera el gestor.
+        // La textura pertenece al gestor de recursos.
     }
-
-	@Override
-	public void actualizar(float delta, Player player) {
-		// TODO Auto-generated method stub
-		
-	}
 }

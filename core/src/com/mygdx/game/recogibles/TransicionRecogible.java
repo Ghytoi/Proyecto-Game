@@ -3,9 +3,10 @@ package com.mygdx.game.recogibles;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.utils.Disposable;
 
-public class TransicionRecogible implements Disposable {
+// La textura es compartida (la crea y libera GestionObjetosRecogibles),
+// por eso esta clase ya no implementa Disposable.
+public class TransicionRecogible {
     private final Rectangle area;
     private final Texture textura;
     private final String destino;
@@ -36,10 +37,5 @@ public class TransicionRecogible implements Disposable {
 
     public boolean estaFueraPantalla() {
         return area.y + area.height < 0;
-    }
-
-    @Override
-    public void dispose() {
-        textura.dispose();
     }
 }

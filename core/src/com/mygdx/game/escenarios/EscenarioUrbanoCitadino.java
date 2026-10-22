@@ -1,4 +1,3 @@
-
 package com.mygdx.game.escenarios;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;

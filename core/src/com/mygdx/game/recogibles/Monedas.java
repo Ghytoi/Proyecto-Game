@@ -1,49 +1,48 @@
 package com.mygdx.game.recogibles;
 
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.mygdx.game.jugador.Player;
-import com.badlogic.gdx.audio.Sound;
 
 public class Monedas implements ObjetoRecogible {
-    private Rectangle area;
-    private Texture texturaBuena;
-    private Texture texturaMala;
-    private Sound sonido;
-    private boolean mala;
-    private float velocidad;
+    private final Rectangle area;
+    private final Texture textura;
+    private final Sound sonido;
+    private final boolean mala;
+    private final float velocidad;
 
-    public Monedas(Texture texturaBuena, Texture texturaMala, Sound sonido, boolean mala, float x, float y, float velocidad) {
-        this.texturaBuena = texturaBuena;
-        this.texturaMala = texturaMala;
+    // La moneda mala reutiliza la misma textura, pero se dibuja teñida de rojo.
+    public Monedas(Texture textura, Sound sonido, boolean mala, float x, float y, float velocidad) {
+        this.textura = textura;
         this.sonido = sonido;
         this.mala = mala;
         this.velocidad = velocidad;
-
-        area = new Rectangle(x, y, 64, 64);
+        this.area = new Rectangle(x, y, 64, 64);
     }
 
     @Override
-    public void actualizar(float delta,Player player) {
+    public void actualizar(float delta) {
         area.y -= velocidad * delta;
+    }
 
-        if (!mala && player.estaAtrayendoMonedas()) {
-            float monedaX = area.x + area.width / 2;
-            float monedaY = area.y + area.height / 2;
-            float jugadorX = player.getArea().x + player.getArea().width / 2;
-            float jugadorY = player.getArea().y + player.getArea().height / 2;
+    @Override
+    public void actualizar(float delta, Player player) {
+        actualizar(delta);
 
-            if (player.atraeMonedas(monedaX,monedaY)) {
-                float dx = jugadorX - monedaX;
-                float dy = jugadorY - monedaY;
+        if (!mala && player.estaAtrayendoMonedas() && player.atraeMonedas(area.x, area.y)) {
+            Rectangle jugador = player.getArea();
+
+            if (jugador != null) {
+                float dx = jugador.x + jugador.width / 2f - (area.x + area.width / 2f);
+                float dy = jugador.y + jugador.height / 2f - (area.y + area.height / 2f);
                 float distancia = (float) Math.sqrt(dx * dx + dy * dy);
 
                 if (distancia > 0) {
-                    float velocidadIman = 700 * delta;
-                    float movimiento = Math.min(velocidadIman,distancia);
-                    area.x += dx / distancia * movimiento;
-                    area.y += dy / distancia * movimiento;
+                    float atraccion = 700f * delta;
+                    area.x += dx / distancia * atraccion;
+                    area.y += dy / distancia * atraccion;
                 }
             }
         }
@@ -51,22 +50,31 @@ public class Monedas implements ObjetoRecogible {
 
     @Override
     public void dibujar(SpriteBatch batch) {
-        Texture textura = mala ? texturaMala : texturaBuena;
+        if (textura == null) return;
+
+        if (mala) {
+            batch.setColor(1f, 0.25f, 0.25f, 1f);
+        }
+
         batch.draw(textura, area.x, area.y, area.width, area.height);
+        batch.setColor(1f, 1f, 1f, 1f);
     }
 
     @Override
     public Rectangle getArea() {
-        return area;
+        return new Rectangle(area);
     }
 
     @Override
     public void recoger(Player player) {
         if (mala) {
-            player.dañar();
+            player.danar();
         } else {
             player.sumarMoneda();
-            sonido.play();
+
+            if (sonido != null) {
+                sonido.play();
+            }
         }
     }
 
@@ -74,15 +82,9 @@ public class Monedas implements ObjetoRecogible {
     public boolean estaFueraPantalla() {
         return area.y + area.height < 0;
     }
-    
+
     @Override
     public void destruir() {
-        // Las texturas y el sonido son compartidos por el gestor.
+        // Los recursos compartidos pertenecen a quien los crea (SubwaySurfer).
     }
-
-	@Override
-	public void actualizar(float delta) {
-		// TODO Auto-generated method stub
-		
-	}
 }

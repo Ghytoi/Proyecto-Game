@@ -1,4 +1,3 @@
-
 package com.mygdx.game.jugador;
 
 import com.badlogic.gdx.Gdx;
@@ -6,45 +5,219 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.mygdx.game.recogibles.PowerUp;
 
 public class Player {
+    private static final int VIDAS_INICIALES = 3;   // para pruebas puedes subirlo (ej. 9999)
+    private static final int MONEDAS_POR_VIDA = 100;
+    private static final float ANCHO_MUNDO = 1280;
+    private static final float ANCHO_JUGADOR = 64;
+    private static final float ALTO_JUGADOR = 64;
+    private static final float ANCHO_CARRIL = ANCHO_MUNDO / 3f;
+
     private Rectangle bucket;
     private Texture bucketImage;
     private Sound sonidoHerido;
-
-    private int vidas = 2;
+    private int vidas = VIDAS_INICIALES;
     private int puntos = 0;
     private int carrilActual = 1;
     private int monedas = 0;
     private int multiplicador = 1;
-
     private boolean herido = false;
     private boolean escudoActivo = false;
     private boolean imanActivo = false;
     private boolean estrellaActiva = false;
+    private boolean izquierdaPresionada = false;
+    private boolean derechaPresionada = false;
+    private float tiempoHerido = 0;
+    private float tiempoEscudo = 0;
+    private float tiempoIman = 0;
+    private float tiempoEstrella = 0;
+    private float tiempoPuntaje = 0;
 
-    private boolean teclaIzquierdaAnterior = false;
-    private boolean teclaDerechaAnterior = false;
-
-    private float tiempoHerido;
-    private float tiempoHeridoMax = 0.3f;
-    private float tiempoEscudo;
-    private float tiempoIman;
-    private float tiempoEstrella;
-
-    private static final int MONEDAS_POR_VIDA = 50;
-
-    private static final float ANCHO_MUNDO = 1280;
-    private static final float ANCHO_TARRO = 64;
-    private static final float ALTO_TARRO = 64;
-    private static final float ANCHO_CARRIL = ANCHO_MUNDO / 3;
-
-    public Player(Texture tex,Sound ss) {
+    public Player(Texture tex, Sound ss) {
         bucketImage = tex;
         sonidoHerido = ss;
+    }
+
+    public void crear() {
+        bucket = new Rectangle();
+        bucket.width = ANCHO_JUGADOR;
+        bucket.height = ALTO_JUGADOR;
+        actualizarCarril();
+        bucket.y = 20;
+    }
+
+    public void reiniciar() {
+        vidas = VIDAS_INICIALES;
+        puntos = 0;
+        monedas = 0;
+        multiplicador = 1;
+        carrilActual = 1;
+        herido = false;
+        escudoActivo = false;
+        imanActivo = false;
+        estrellaActiva = false;
+        tiempoHerido = 0;
+        tiempoEscudo = 0;
+        tiempoIman = 0;
+        tiempoEstrella = 0;
+        tiempoPuntaje = 0;
+        actualizarCarril();
+    }
+
+    public void actualizarMovimiento() {
+        boolean izquierda = Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A);
+        boolean derecha = Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D);
+
+        if (izquierda && !izquierdaPresionada && carrilActual > 0) {
+            carrilActual--;
+            actualizarCarril();
+        }
+
+        if (derecha && !derechaPresionada && carrilActual < 2) {
+            carrilActual++;
+            actualizarCarril();
+        }
+
+        izquierdaPresionada = izquierda;
+        derechaPresionada = derecha;
+    }
+
+    private void actualizarCarril() {
+        if (bucket != null) {
+            bucket.x = carrilActual * ANCHO_CARRIL + (ANCHO_CARRIL - ANCHO_JUGADOR) / 2f;
+        }
+    }
+
+    public void actualizarEstado() {
+        float delta = Gdx.graphics.getDeltaTime();
+
+        tiempoPuntaje += delta;
+        while (tiempoPuntaje >= 1f) {
+            puntos += multiplicador;
+            tiempoPuntaje -= 1f;
+        }
+
+        if (herido) {
+            tiempoHerido += delta;
+            if (tiempoHerido >= 2f) {
+                herido = false;
+                tiempoHerido = 0;
+            }
+        }
+
+        if (escudoActivo) {
+            tiempoEscudo -= delta;
+            if (tiempoEscudo <= 0) {
+                escudoActivo = false;
+                tiempoEscudo = 0;
+            }
+        }
+
+        if (imanActivo) {
+            tiempoIman -= delta;
+            if (tiempoIman <= 0) {
+                imanActivo = false;
+                tiempoIman = 0;
+            }
+        }
+
+        if (estrellaActiva) {
+            tiempoEstrella -= delta;
+            if (tiempoEstrella <= 0) {
+                estrellaActiva = false;
+                multiplicador = 1;
+                tiempoEstrella = 0;
+            }
+        }
+    }
+
+    public float getTiempoEscudo() {
+        return tiempoEscudo;
+    }
+
+    public boolean tieneIman() {
+        return imanActivo;
+    }
+
+    public float getTiempoIman() {
+        return tiempoIman;
+    }
+
+    public float getTiempoEstrella() {
+        return tiempoEstrella;
+    }
+
+    public void sumarPuntos(int cantidad) {
+        puntos += cantidad * multiplicador;
+    }
+
+    public void sumarMoneda() {
+        monedas++;
+
+        if (monedas >= MONEDAS_POR_VIDA) {
+            monedas -= MONEDAS_POR_VIDA;
+            vidas++;
+        }
+    }
+
+    public void activarEscudo() {
+        escudoActivo = true;
+        tiempoEscudo = PowerUp.getDuracion(PowerUp.Tipo.ESCUDO);
+    }
+
+    public void activarIman() {
+        imanActivo = true;
+        tiempoIman = PowerUp.getDuracion(PowerUp.Tipo.IMAN);
+    }
+
+    public void activarEstrella(int multiplicador) {
+        estrellaActiva = true;
+        this.multiplicador = multiplicador;
+        tiempoEstrella = PowerUp.getDuracion(PowerUp.Tipo.ESTRELLA);
+    }
+
+    public void danar() {
+        if (escudoActivo || herido || vidas <= 0) {
+            return;
+        }
+
+        vidas--;
+        herido = true;
+        tiempoHerido = 0;
+
+        if (sonidoHerido != null) {
+            sonidoHerido.play();
+        }
+    }
+
+    public boolean estaAtrayendoMonedas() {
+        return imanActivo;
+    }
+
+    public boolean atraeMonedas(float x, float y) {
+        if (!imanActivo || bucket == null) {
+            return false;
+        }
+
+        float centroX = bucket.x + bucket.width / 2f;
+        float centroY = bucket.y + bucket.height / 2f;
+        float dx = x - centroX;
+        float dy = y - centroY;
+
+        return dx * dx + dy * dy <= 500f * 500f;
+    }
+
+    public void dibujar(SpriteBatch batch) {
+        if (bucketImage != null && bucket != null) {
+            batch.draw(bucketImage, bucket.x, bucket.y, bucket.width, bucket.height);
+        }
+    }
+
+    public Rectangle getArea() {
+        return bucket;
     }
 
     public int getVidas() {
@@ -59,12 +232,12 @@ public class Player {
         return monedas;
     }
 
-    public int getCarrilActual() {
-        return carrilActual;
+    public int getMultiplicador() {
+        return multiplicador;
     }
 
-    public Rectangle getArea() {
-        return bucket;
+    public int getCarrilActual() {
+        return carrilActual;
     }
 
     public boolean estaHerido() {
@@ -75,166 +248,19 @@ public class Player {
         return escudoActivo;
     }
 
-    public boolean tieneIman() {
-        return imanActivo;
-    }
-
     public boolean tieneEstrella() {
         return estrellaActiva;
     }
 
-    public int getMultiplicador() {
-        return multiplicador;
-    }
-
-    public void sumarPuntos(int cantidad) {
-        puntos += cantidad * multiplicador;
-    }
-
-    public void sumarMoneda() {
-        monedas++;
-        sumarPuntos(1);
-
-        if (monedas % MONEDAS_POR_VIDA == 0) {
-            vidas++;
-            Gdx.app.log("¡Vida extra! Vidas: " + vidas, " | Monedas: " + monedas);
-        }
-    }
-
-    public void activarEscudo() {
-        escudoActivo = true;
-        tiempoEscudo = PowerUp.getDuracion(PowerUp.Tipo.ESCUDO);
-    }
-
-    public void activarIman() {
-        imanActivo = true;
-        tiempoIman = PowerUp.getDuracion(PowerUp.Tipo.IMAN);
-    }
-
-    public void activarEstrella(int nuevoMultiplicador) {
-        estrellaActiva = true;
-        multiplicador = Math.max(1,nuevoMultiplicador);
-        tiempoEstrella = PowerUp.getDuracion(PowerUp.Tipo.ESTRELLA);
-    }
-
-    public void crear() {
-        bucket = new Rectangle();
-        bucket.width = ANCHO_TARRO;
-        bucket.height = ALTO_TARRO;
-        bucket.y = 20;
-        actualizarPosicionCarril();
-    }
-
-    private void actualizarPosicionCarril() {
-        bucket.x = carrilActual * ANCHO_CARRIL
-                + (ANCHO_CARRIL - bucket.width) / 2;
-    }
-
-    public void actualizarMovimiento() {
-        boolean izquierda = Gdx.input.isKeyPressed(Input.Keys.LEFT)
-                || Gdx.input.isKeyPressed(Input.Keys.A);
-        boolean derecha = Gdx.input.isKeyPressed(Input.Keys.RIGHT)
-                || Gdx.input.isKeyPressed(Input.Keys.D);
-
-        if (izquierda && !teclaIzquierdaAnterior && carrilActual > 0) {
-            carrilActual--;
-            actualizarPosicionCarril();
-        }
-
-        if (derecha && !teclaDerechaAnterior && carrilActual < 2) {
-            carrilActual++;
-            actualizarPosicionCarril();
-        }
-
-        teclaIzquierdaAnterior = izquierda;
-        teclaDerechaAnterior = derecha;
-    }
-
-    public void dañar() {
-        if (!escudoActivo && !herido && vidas > 0) {
-            vidas--;
-            herido = true;
-            tiempoHerido = tiempoHeridoMax;
-            sonidoHerido.play();
-        }
-    }
-    public boolean estaAtrayendoMonedas() {
-        return imanActivo;
-    }
-
-    public void actualizarEstado() {
-        float delta = Gdx.graphics.getDeltaTime();
-
-        if (herido) {
-            tiempoHerido -= delta;
-
-            if (tiempoHerido <= 0) {
-                herido = false;
-            }
-        }
-
-        if (escudoActivo) {
-            tiempoEscudo -= delta;
-
-            if (tiempoEscudo <= 0) {
-                escudoActivo = false;
-            }
-        }
-
-        if (imanActivo) {
-            tiempoIman -= delta;
-
-            if (tiempoIman <= 0) {
-                imanActivo = false;
-            }
-        }
-
-        if (estrellaActiva) {
-            tiempoEstrella -= delta;
-
-            if (tiempoEstrella <= 0) {
-            	tiempoEstrella = 0;
-                estrellaActiva = false;
-                multiplicador = 1;
-            }
-        }
-    }
-    
-    public boolean atraeMonedas(float x,float y) {
-        if (!imanActivo) {
-            return false;
-        }
-
-        float centroX = bucket.x + bucket.width / 2;
-        float centroY = bucket.y + bucket.height / 2;
-        float distanciaX = centroX - x;
-        float distanciaY = centroY - y;
-
-        return distanciaX * distanciaX + distanciaY * distanciaY <= 500 * 500;
-    }
-
-    public void dibujar(SpriteBatch batch) {
-        if (!herido) {
-            batch.draw(bucketImage,bucket.x,bucket.y);
-        } else {
-            batch.draw(bucketImage,bucket.x,bucket.y + MathUtils.random(-5,5));
-        }
-    }
-    
-    public float getTiempoEscudo() {
-        return Math.max(0,tiempoEscudo);
-    }
-
-    public float getTiempoIman() {
-        return Math.max(0,tiempoIman);
-    }
-
-    public float getTiempoEstrella() {
-        return Math.max(0,tiempoEstrella);
-    }
-
     public void destruir() {
-        bucketImage.dispose();
-        sonidoHerido.dispose();
+        if (bucketImage != null) {
+            bucketImage.dispose();
+            bucketImage = null;
+        }
+
+        if (sonidoHerido != null) {
+            sonidoHerido.dispose();
+            sonidoHerido = null;
+        }
     }
 }
