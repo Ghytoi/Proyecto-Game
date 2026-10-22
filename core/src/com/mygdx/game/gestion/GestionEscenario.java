@@ -1,14 +1,14 @@
 package com.mygdx.game.gestion;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.Disposable;
 import com.mygdx.game.escenarios.Escenario;
 import com.mygdx.game.escenarios.EscenarioAereo;
 import com.mygdx.game.escenarios.EscenarioTunelUrbano;
 import com.mygdx.game.escenarios.EscenarioUrbanoCitadino;
 import com.mygdx.game.escenarios.EscenarioViasTrenes;
 
-public class GestionEscenario implements Disposable {
+// Las texturas de fondo las libera GestorRecursos, por eso ya no es Disposable.
+public class GestionEscenario {
     private final EscenarioViasTrenes vias;
     private final EscenarioUrbanoCitadino ciudad;
     private final EscenarioTunelUrbano tunel;
@@ -64,20 +64,12 @@ public class GestionEscenario implements Disposable {
     }
 
     public void actualizar(float delta) {
-        // Los escenarios todavía no necesitan actualizar su propia lógica.
+        // Los escenarios todavia no necesitan actualizar su propia logica.
     }
 
     public void dibujar(SpriteBatch batch, float ancho, float alto) {
         if (actual != null) {
             actual.render(batch, ancho, alto);
         }
-    }
-
-    @Override
-    public void dispose() {
-        vias.dispose();
-        ciudad.dispose();
-        tunel.dispose();
-        aereo.dispose();
     }
 }

@@ -6,16 +6,19 @@ public class EscenarioTunelUrbano extends Escenario {
     public EscenarioTunelUrbano() {
         super("tunel.jpg");
     }
-    
-    @Override
-    public void render(SpriteBatch batch, float ancho, float alto) {
-        float anchoCarril = ancho / 3;
 
-        batch.draw(getFondo(), 0, 0, anchoCarril, alto);
-        batch.draw(getFondo(), anchoCarril, 0, anchoCarril, alto);
-        batch.draw(getFondo(), anchoCarril * 2, 0, anchoCarril, alto);
+    // Gancho del Template Method: el tunel se dibuja un poco mas oscuro.
+    // Si no te gusta el efecto, borra estos dos metodos.
+    @Override
+    protected void prepararRender(SpriteBatch batch) {
+        batch.setColor(0.7f, 0.7f, 0.8f, 1f);
     }
-    
+
+    @Override
+    protected void finalizarRender(SpriteBatch batch) {
+        batch.setColor(1f, 1f, 1f, 1f);
+    }
+
     @Override
     public String getNombre() {
         return "Tunel urbano";

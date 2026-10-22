@@ -13,7 +13,7 @@ public class Monedas implements ObjetoRecogible {
     private final boolean mala;
     private final float velocidad;
 
-    // La moneda mala reutiliza la misma textura, pero se dibuja teñida de rojo.
+    // La moneda mala reutiliza la misma textura, pero se dibuja tenida de rojo.
     public Monedas(Texture textura, Sound sonido, boolean mala, float x, float y, float velocidad) {
         this.textura = textura;
         this.sonido = sonido;
@@ -34,16 +34,14 @@ public class Monedas implements ObjetoRecogible {
         if (!mala && player.estaAtrayendoMonedas() && player.atraeMonedas(area.x, area.y)) {
             Rectangle jugador = player.getArea();
 
-            if (jugador != null) {
-                float dx = jugador.x + jugador.width / 2f - (area.x + area.width / 2f);
-                float dy = jugador.y + jugador.height / 2f - (area.y + area.height / 2f);
-                float distancia = (float) Math.sqrt(dx * dx + dy * dy);
+            float dx = jugador.x + jugador.width / 2f - (area.x + area.width / 2f);
+            float dy = jugador.y + jugador.height / 2f - (area.y + area.height / 2f);
+            float distancia = (float) Math.sqrt(dx * dx + dy * dy);
 
-                if (distancia > 0) {
-                    float atraccion = 700f * delta;
-                    area.x += dx / distancia * atraccion;
-                    area.y += dy / distancia * atraccion;
-                }
+            if (distancia > 0) {
+                float atraccion = 700f * delta;
+                area.x += dx / distancia * atraccion;
+                area.y += dy / distancia * atraccion;
             }
         }
     }
@@ -85,6 +83,6 @@ public class Monedas implements ObjetoRecogible {
 
     @Override
     public void destruir() {
-        // Los recursos compartidos pertenecen a quien los crea (SubwaySurfer).
+        // Los recursos compartidos pertenecen a GestorRecursos.
     }
 }

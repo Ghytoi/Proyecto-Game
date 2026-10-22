@@ -10,6 +10,7 @@ import com.mygdx.game.recogibles.Monedas;
 import com.mygdx.game.recogibles.ObjetoRecogible;
 import com.mygdx.game.recogibles.PowerUp;
 import com.mygdx.game.recogibles.TransicionRecogible;
+import com.mygdx.game.recursos.GestorRecursos;
 
 public class GestionObjetosRecogibles {
     private static final float ANCHO_MUNDO = 1280;
@@ -18,15 +19,13 @@ public class GestionObjetosRecogibles {
     private static final float INTERVALO_POWERUP = 15f;
     private static final float INTERVALO_TRANSICION = 5f;
     private static final float TIEMPO_ENTRE_OBJETOS = 0.8f;
-
+    
     private final Array<ObjetoRecogible> objetos;
     private final Array<TransicionRecogible> transiciones;
 
-    // Recursos que vienen de fuera: los libera quien los creo (SubwaySurfer).
+    // Todas las texturas y sonidos son compartidos: los administra GestorRecursos.
     private final Texture texturaMoneda;
     private final Sound sonidoMoneda;
-
-    // Recursos propios: los libera esta clase en destruir().
     private final Texture portalVias;
     private final Texture portalCiudad;
     private final Texture portalTunel;
@@ -42,20 +41,22 @@ public class GestionObjetosRecogibles {
     private float tiempoTransicion;
     private float tiempoPowerUp;
 
-    public GestionObjetosRecogibles(Texture texturaMoneda, Sound sonidoMoneda, GestionEscenario gestionEscenario, float velocidad) {
-        this.texturaMoneda = texturaMoneda;
-        this.sonidoMoneda = sonidoMoneda;
+    public GestionObjetosRecogibles(GestionEscenario gestionEscenario, float velocidad) {
         this.gestionEscenario = gestionEscenario;
         this.velocidad = velocidad;
 
-        portalVias = new Texture("portal_vias.png");
-        portalCiudad = new Texture("portal_ciudad.jpg");
-        portalTunel = new Texture("portal_tunel.jpg");
-        portalAereo = new Texture("portal_aereo.png");
+        GestorRecursos recursos = GestorRecursos.getInstancia();
+        texturaMoneda = recursos.getTextura("moneda.jpg");
+        sonidoMoneda = recursos.getSonido("drop.wav");
 
-        texturaEscudo = new Texture("escudo.jpg");
-        texturaIman = new Texture("iman.png");
-        texturaEstrella = new Texture("estrella.png");
+        portalVias = recursos.getTextura("portal_vias.png");
+        portalCiudad = recursos.getTextura("portal_ciudad.jpg");
+        portalTunel = recursos.getTextura("portal_tunel.jpg");
+        portalAereo = recursos.getTextura("portal_aereo.png");
+
+        texturaEscudo = recursos.getTextura("escudo.jpg");
+        texturaIman = recursos.getTextura("iman.png");
+        texturaEstrella = recursos.getTextura("estrella.png");
 
         objetos = new Array<ObjetoRecogible>();
         transiciones = new Array<TransicionRecogible>();
@@ -72,10 +73,9 @@ public class GestionObjetosRecogibles {
 
     private void crearMoneda() {
         int carril = MathUtils.random(0, 2);
-        boolean mala = false; 
-        /* Se deja como false para que no aparezca nunca, 
-        aunque se está investigando como eliminar correctamente
-		*/
+        boolean mala = false;
+        //Se está investigando como eliminar este atributo que no se utiliza "mala"
+
         objetos.add(new Monedas(texturaMoneda, sonidoMoneda, mala, calcularXCarril(carril), ALTO_MUNDO, velocidad));
         tiempoGeneracion = 0;
     }
@@ -212,18 +212,5 @@ public class GestionObjetosRecogibles {
         tiempoGeneracion = 0;
         tiempoTransicion = 0;
         tiempoPowerUp = 0;
-    }
-
-    public void destruir() {
-        reiniciarObjetos();
-
-        portalVias.dispose();
-        portalCiudad.dispose();
-        portalTunel.dispose();
-        portalAereo.dispose();
-
-        texturaEscudo.dispose();
-        texturaIman.dispose();
-        texturaEstrella.dispose();
     }
 }

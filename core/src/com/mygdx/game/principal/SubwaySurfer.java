@@ -4,23 +4,19 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.mygdx.game.entidades.Auto;
-import com.mygdx.game.entidades.AutoBus;
-import com.mygdx.game.entidades.Avion;
-import com.mygdx.game.entidades.BandadaDePajaros;
-import com.mygdx.game.entidades.VagonesDeTrenes;
+import com.mygdx.game.entidades.ObstaculoBuilder;
+import com.mygdx.game.entidades.TipoObstaculo;
 import com.mygdx.game.gestion.GestionEntidadMovil;
 import com.mygdx.game.gestion.GestionEscenario;
 import com.mygdx.game.gestion.GestionObjetosRecogibles;
 import com.mygdx.game.jugador.Player;
+import com.mygdx.game.recursos.GestorRecursos;
 
 public class SubwaySurfer extends ApplicationAdapter {
     private static final float ANCHO_MUNDO = 1280f;
@@ -29,9 +25,6 @@ public class SubwaySurfer extends ApplicationAdapter {
     private static final float VELOCIDAD_MUNDO = 300f;   // misma velocidad para obstaculos y recogibles
     private static final float INTERVALO_MINIMO = 0.8f;
     private static final float INTERVALO_MAXIMO = 2.0f;
-    private static final float ANCHO_ENTIDAD = 100f;
-    private static final float ALTO_ENTIDAD = 100f;
-    private static final float ALTO_VAGON = 180f;
 
     private float tiempoProximaEntidad = 0.1f;
 
@@ -45,14 +38,6 @@ public class SubwaySurfer extends ApplicationAdapter {
     private GestionEntidadMovil gestionEntidadMovil;
     private GestionObjetosRecogibles gestionObjetosRecogibles;
     private Music musicaFondo;
-    private Sound sonidoMoneda;
-
-    private Texture texturaAuto;
-    private Texture texturaAutobus;
-    private Texture texturaAvion;
-    private Texture texturaPajaros;
-    private Texture texturaMoneda;
-    private Texture texturaVagon;
 
     @Override
     public void create() {
@@ -63,42 +48,26 @@ public class SubwaySurfer extends ApplicationAdapter {
         batch = new SpriteBatch();
         font = new BitmapFont();
 
+        // Singleton: todos los recursos se piden a GestorRecursos.
+        GestorRecursos recursos = GestorRecursos.getInstancia();
+
         player = new Player(
-            new Texture("player.jpg"),
-            Gdx.audio.newSound(Gdx.files.internal("hurt.ogg"))
+            recursos.getTextura("player.jpg"),
+            recursos.getSonido("hurt.ogg")
         );
         player.crear();
 
-        musicaFondo = Gdx.audio.newMusic(Gdx.files.internal("principalTheme.mp3"));
+        musicaFondo = recursos.getMusica("principalTheme.mp3");
         musicaFondo.setLooping(true);
         musicaFondo.setVolume(VOLUMEN_MUSICA);
         musicaFondo.play();
 
         gestionEscenario = new GestionEscenario();
         gestionEntidadMovil = new GestionEntidadMovil();
-
-        texturaAuto = new Texture("auto.jpg");
-        texturaAutobus = new Texture("autobus.jpg");
-        texturaAvion = new Texture("avion.jpg");
-        texturaPajaros = new Texture("pajaros.jpg");
-        texturaMoneda = new Texture("moneda.jpg");
-        texturaVagon = new Texture("vagon.jpg");
-        sonidoMoneda = Gdx.audio.newSound(Gdx.files.internal("drop.wav"));
-
-        gestionObjetosRecogibles = new GestionObjetosRecogibles(
-            texturaMoneda,
-            sonidoMoneda,
-            gestionEscenario,
-            VELOCIDAD_MUNDO
-        );
+        gestionObjetosRecogibles = new GestionObjetosRecogibles(gestionEscenario, VELOCIDAD_MUNDO);
         gestionObjetosRecogibles.crear();
 
         crearEntidadesEscenario();
-    }
-
-    private float calcularXCentroCarril(int carril, float anchoEntidad) {
-        float anchoCarril = ANCHO_MUNDO / 3f;
-        return carril * anchoCarril + (anchoCarril - anchoEntidad) / 2f;
     }
 
     private void crearEntidadesEscenario() {
@@ -199,45 +168,35 @@ public class SubwaySurfer extends ApplicationAdapter {
 
     private void generarEntidadAleatoria() {
         String escenario = gestionEscenario.getNombreEscenarioActual();
-        int carril = MathUtils.random(0, 2);
-        float x = calcularXCentroCarril(carril, ANCHO_ENTIDAD);
+        TipoObstaculo tipo;
 
         switch (escenario) {
             case "VIAS":
-                gestionEntidadMovil.agregar(
-                    new VagonesDeTrenes(texturaVagon, x, ALTO_MUNDO, ANCHO_ENTIDAD, ALTO_VAGON, VELOCIDAD_MUNDO)
-                );
+                tipo = TipoObstaculo.VAGON;
                 break;
 
             case "CIUDAD":
             case "TUNEL":
-                if (MathUtils.randomBoolean()) {
-                    gestionEntidadMovil.agregar(
-                        new Auto(texturaAuto, x, ALTO_MUNDO, ANCHO_ENTIDAD, ALTO_ENTIDAD, VELOCIDAD_MUNDO)
-                    );
-                } else {
-                    gestionEntidadMovil.agregar(
-                        new AutoBus(texturaAutobus, x, ALTO_MUNDO, ANCHO_ENTIDAD, ALTO_ENTIDAD, VELOCIDAD_MUNDO)
-                    );
-                }
+                tipo = MathUtils.randomBoolean() ? TipoObstaculo.AUTO : TipoObstaculo.AUTOBUS;
                 break;
 
             case "AEREO":
-                if (MathUtils.randomBoolean()) {
-                    gestionEntidadMovil.agregar(
-                        new Avion(texturaAvion, x, ALTO_MUNDO, ANCHO_ENTIDAD, ALTO_ENTIDAD, VELOCIDAD_MUNDO)
-                    );
-                } else {
-                    gestionEntidadMovil.agregar(
-                        new BandadaDePajaros(texturaPajaros, x, ALTO_MUNDO, ANCHO_ENTIDAD, ALTO_ENTIDAD, VELOCIDAD_MUNDO)
-                    );
-                }
+                tipo = MathUtils.randomBoolean() ? TipoObstaculo.AVION : TipoObstaculo.PAJAROS;
                 break;
 
             default:
                 Gdx.app.error("SubwaySurfer", "Escenario desconocido: " + escenario);
-                break;
+                return;
         }
+
+        // Builder: arma el obstaculo paso a paso.
+        gestionEntidadMovil.agregar(
+            new ObstaculoBuilder()
+                .tipo(tipo)
+                .carril(MathUtils.random(0, 2))
+                .velocidad(VELOCIDAD_MUNDO)
+                .construir()
+        );
     }
 
     private void actualizarGeneracionEntidades(float delta) {
@@ -251,24 +210,14 @@ public class SubwaySurfer extends ApplicationAdapter {
 
     @Override
     public void dispose() {
-        if (player != null) player.destruir();
-        if (gestionEntidadMovil != null) gestionEntidadMovil.destruir();
-        if (gestionObjetosRecogibles != null) gestionObjetosRecogibles.destruir();
-        if (gestionEscenario != null) gestionEscenario.dispose();
-
         if (musicaFondo != null) {
             musicaFondo.stop();
-            musicaFondo.dispose();
         }
 
-        if (sonidoMoneda != null) sonidoMoneda.dispose();
+        if (gestionEntidadMovil != null) gestionEntidadMovil.destruir();
 
-        if (texturaAuto != null) texturaAuto.dispose();
-        if (texturaAutobus != null) texturaAutobus.dispose();
-        if (texturaAvion != null) texturaAvion.dispose();
-        if (texturaPajaros != null) texturaPajaros.dispose();
-        if (texturaMoneda != null) texturaMoneda.dispose();
-        if (texturaVagon != null) texturaVagon.dispose();
+        // Singleton: libera de una sola vez texturas, sonidos y musica.
+        GestorRecursos.liberar();
 
         if (font != null) font.dispose();
         if (batch != null) batch.dispose();

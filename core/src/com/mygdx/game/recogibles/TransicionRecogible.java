@@ -4,8 +4,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 
-// La textura es compartida (la crea y libera GestionObjetosRecogibles),
-// por eso esta clase ya no implementa Disposable.
+// La textura es compartida (la administra GestorRecursos), por eso ya no es Disposable.
 public class TransicionRecogible {
     private final Rectangle area;
     private final Texture textura;
@@ -28,7 +27,7 @@ public class TransicionRecogible {
     }
 
     public Rectangle getArea() {
-        return area;
+        return new Rectangle(area);
     }
 
     public String getDestino() {
