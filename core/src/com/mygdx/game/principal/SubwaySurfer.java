@@ -49,6 +49,9 @@ public class SubwaySurfer extends ApplicationAdapter {
     private int nivelDificultad = 1;
     private float tiempoAlertaNivel = 0f;
     private String textoAlertaNivel = "";
+    private float tiempoJuego = 0f;
+    private Texture texturaCorazon;
+    private Texture texturaCorazonVacio;
 
     private OrthographicCamera camera;
     private FitViewport viewport;
@@ -78,6 +81,9 @@ public class SubwaySurfer extends ApplicationAdapter {
 
         // Singleton: todos los recursos se piden a GestorRecursos.
         GestorRecursos recursos = GestorRecursos.getInstancia();
+
+        texturaCorazon = recursos.getTextura("corazon.png");
+        texturaCorazonVacio = recursos.getTextura("corazon_vacio.png");
 
         player = new Player(
             recursos.getTextura("player.jpg"),
@@ -124,6 +130,7 @@ public class SubwaySurfer extends ApplicationAdapter {
     @Override
     public void render() {
         float delta = Gdx.graphics.getDeltaTime();
+        tiempoJuego += delta;
 
         if (tiempoGlitch > 0) {
             tiempoGlitch -= delta;
@@ -239,7 +246,41 @@ public class SubwaySurfer extends ApplicationAdapter {
 
         font.draw(batch, "Puntos: " + player.getPuntos(), 20f, ALTO_MUNDO - 20f);
         font.draw(batch, "Monedas: " + player.getMonedas(), 20f, ALTO_MUNDO - 40f);
-        font.draw(batch, "Vidas: " + player.getVidas(), ANCHO_MUNDO - 100f, ALTO_MUNDO - 20f);
+        // Vidas representadas con corazones pixel art (sustituyendo texto)
+        int vidasActuales = player.getVidas();
+        if (texturaCorazon != null) {
+            float tamanoCorazon = 32f;
+            float espaciado = 6f;
+            float yCorazon = ALTO_MUNDO - 36f;
+
+            if (vidasActuales <= 5) {
+                int totalContenedores = Math.max(3, vidasActuales);
+                float anchoTotal = totalContenedores * tamanoCorazon + (totalContenedores - 1) * espaciado;
+                float xInicio = ANCHO_MUNDO - 20f - anchoTotal;
+
+                for (int i = 0; i < totalContenedores; i++) {
+                    float xPos = xInicio + i * (tamanoCorazon + espaciado);
+                    if (i < vidasActuales) {
+                        // Efecto de latido urgente cuando queda 1 sola vida
+                        if (vidasActuales == 1) {
+                            float pulso = 1f + 0.16f * MathUtils.sin(tiempoJuego * 9f);
+                            float wP = tamanoCorazon * pulso;
+                            float hP = tamanoCorazon * pulso;
+                            batch.draw(texturaCorazon, xPos - (wP - tamanoCorazon) / 2f, yCorazon - (hP - tamanoCorazon) / 2f, wP, hP);
+                        } else {
+                            batch.draw(texturaCorazon, xPos, yCorazon, tamanoCorazon, tamanoCorazon);
+                        }
+                    } else if (texturaCorazonVacio != null) {
+                        batch.draw(texturaCorazonVacio, xPos, yCorazon, tamanoCorazon, tamanoCorazon);
+                    }
+                }
+            } else {
+                // Modo pruebas (ej: 9999 vidas)
+                float xPos = ANCHO_MUNDO - 130f;
+                batch.draw(texturaCorazon, xPos, yCorazon, tamanoCorazon, tamanoCorazon);
+                font.draw(batch, "x " + vidasActuales, xPos + tamanoCorazon + 8f, yCorazon + 22f);
+            }
+        }
 
         // Indicador HUD de Nivel y Velocidad Dinamica
         String etiquetaNivel;
