@@ -4,6 +4,7 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.mygdx.game.jugador.Player;
 import com.mygdx.game.recogibles.Monedas;
@@ -17,7 +18,7 @@ public class GestionObjetosRecogibles {
     private static final float ALTO_MUNDO = 720;
     private static final float ANCHO_OBJETO = 64;
     private static final float INTERVALO_POWERUP = 15f;
-    private static final float INTERVALO_TRANSICION = 5f;
+    private static final float INTERVALO_TRANSICION = 22f;
     private static final float TIEMPO_ENTRE_OBJETOS = 0.8f;
     
     private final Array<ObjetoRecogible> objetos;
@@ -35,14 +36,20 @@ public class GestionObjetosRecogibles {
     private final Texture texturaEstrella;
 
     private final GestionEscenario gestionEscenario;
-    private final float velocidad;
+    private final GestionEntidadMovil gestionEntidadMovil;
+    private float velocidad;
 
     private float tiempoGeneracion;
     private float tiempoTransicion;
     private float tiempoPowerUp;
 
     public GestionObjetosRecogibles(GestionEscenario gestionEscenario, float velocidad) {
+        this(gestionEscenario, null, velocidad);
+    }
+
+    public GestionObjetosRecogibles(GestionEscenario gestionEscenario, GestionEntidadMovil gestionEntidadMovil, float velocidad) {
         this.gestionEscenario = gestionEscenario;
+        this.gestionEntidadMovil = gestionEntidadMovil;
         this.velocidad = velocidad;
 
         GestorRecursos recursos = GestorRecursos.getInstancia();
@@ -62,6 +69,14 @@ public class GestionObjetosRecogibles {
         transiciones = new Array<TransicionRecogible>();
     }
 
+    public void setVelocidad(float velocidad) {
+        this.velocidad = velocidad;
+    }
+
+    public float getVelocidad() {
+        return velocidad;
+    }
+
     public void crear() {
         crearMoneda();
     }
@@ -71,13 +86,53 @@ public class GestionObjetosRecogibles {
         return carril * anchoCarril + (anchoCarril - ANCHO_OBJETO) / 2;
     }
 
-    private void crearMoneda() {
-        int carril = MathUtils.random(0, 2);
+    public boolean carrilOcupadoArriba(int carril, float margenY) {
+        float anchoCarril = ANCHO_MUNDO / 3f;
+        float limiteY = ALTO_MUNDO - margenY;
+        float xMin = carril * anchoCarril;
+        float xMax = (carril + 1) * anchoCarril;
+
+        for (ObjetoRecogible objeto : objetos) {
+            Rectangle area = objeto.getArea();
+            if (area.x < xMax && (area.x + area.width) > xMin && (area.y + area.height) >= limiteY) {
+                return true;
+            }
+        }
+
+        for (TransicionRecogible transicion : transiciones) {
+            Rectangle area = transicion.getArea();
+            if (area.x < xMax && (area.x + area.width) > xMin && (area.y + area.height) >= limiteY) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private Array<Integer> obtenerCarrilesLibresParaRecogible() {
+        Array<Integer> libres = new Array<Integer>();
+        for (int c = 0; c < 3; c++) {
+            boolean ocupadoPorRecogible = carrilOcupadoArriba(c, 160f);
+            boolean ocupadoPorObstaculo = (gestionEntidadMovil != null && gestionEntidadMovil.carrilOcupadoArriba(c, 240f));
+            if (!ocupadoPorRecogible && !ocupadoPorObstaculo) {
+                libres.add(c);
+            }
+        }
+        return libres;
+    }
+
+    private boolean crearMoneda() {
+        Array<Integer> libres = obtenerCarrilesLibresParaRecogible();
+        if (libres.size == 0) {
+            return false;
+        }
+
+        int carril = libres.random();
         boolean mala = false;
-        //Se está investigando como eliminar este atributo que no se utiliza "mala"
 
         objetos.add(new Monedas(texturaMoneda, sonidoMoneda, mala, calcularXCarril(carril), ALTO_MUNDO, velocidad));
         tiempoGeneracion = 0;
+        return true;
     }
 
     private Texture texturaDePortal(String destino) {
@@ -88,8 +143,13 @@ public class GestionObjetosRecogibles {
         return null;
     }
 
-    private void crearTransicion(String escenarioActual) {
-        int carril = MathUtils.random(0, 2);
+    private boolean crearTransicion(String escenarioActual) {
+        Array<Integer> libres = obtenerCarrilesLibresParaRecogible();
+        if (libres.size == 0) {
+            return false;
+        }
+
+        int carril = libres.random();
 
         Array<String> destinos = new Array<String>();
         destinos.add("VIAS");
@@ -107,11 +167,14 @@ public class GestionObjetosRecogibles {
         Texture texturaPortal = texturaDePortal(destino);
 
         if (texturaPortal == null) {
-            return;
+            return false;
         }
 
-        transiciones.add(new TransicionRecogible(texturaPortal, calcularXCarril(carril), ALTO_MUNDO, ANCHO_OBJETO, 100, velocidad, destino));
+        float tamanoPortal = 115f;
+        float xPortal = carril * (ANCHO_MUNDO / 3f) + ((ANCHO_MUNDO / 3f) - tamanoPortal) / 2f;
+        transiciones.add(new TransicionRecogible(texturaPortal, xPortal, ALTO_MUNDO, tamanoPortal, tamanoPortal, velocidad, destino));
         tiempoTransicion = 0;
+        return true;
     }
 
     public void agregar(ObjetoRecogible objeto) {
@@ -130,15 +193,21 @@ public class GestionObjetosRecogibles {
         tiempoPowerUp += delta;
 
         if (tiempoPowerUp >= INTERVALO_POWERUP) {
-            crearPowerUp();
+            if (crearPowerUp()) {
+                tiempoPowerUp = 0;
+            }
         }
 
         if (tiempoGeneracion >= TIEMPO_ENTRE_OBJETOS) {
-            crearMoneda();
+            if (crearMoneda()) {
+                tiempoGeneracion = 0;
+            }
         }
 
         if (tiempoTransicion >= INTERVALO_TRANSICION && transiciones.size == 0) {
-            crearTransicion(gestionEscenario.getNombreEscenarioActual());
+            if (crearTransicion(gestionEscenario.getNombreEscenarioActual())) {
+                tiempoTransicion = 0;
+            }
         }
 
         for (int i = objetos.size - 1; i >= 0; i--) {
@@ -182,8 +251,14 @@ public class GestionObjetosRecogibles {
         }
     }
 
-    private void crearPowerUp() {
-        float x = calcularXCarril(MathUtils.random(0, 2));
+    private boolean crearPowerUp() {
+        Array<Integer> libres = obtenerCarrilesLibresParaRecogible();
+        if (libres.size == 0) {
+            return false;
+        }
+
+        int carril = libres.random();
+        float x = calcularXCarril(carril);
         int tipo = MathUtils.random(0, 2);   // 0 escudo, 1 iman, 2 estrella (1/3 cada uno)
         PowerUp powerUp;
 
@@ -199,6 +274,7 @@ public class GestionObjetosRecogibles {
 
         objetos.add(powerUp);
         tiempoPowerUp = 0;
+        return true;
     }
 
     public void reiniciarObjetos() {
