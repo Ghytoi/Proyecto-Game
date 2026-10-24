@@ -16,7 +16,7 @@ import com.mygdx.game.recogibles.PowerUp;
 // La textura y el sonido son compartidos: los libera GestorRecursos.
 public class Player {
     private static final int VIDAS_INICIALES = 3;   // para pruebas puedes subirlo (ej. 9999)
-    private static final float DURACION_INVULNERABILIDAD = 1.5f;   // segundos tras recibir dano
+    private static final float DURACION_INVULNERABILIDAD = 1.5f;   // segundos tras recibir daño
     private static final int MONEDAS_POR_VIDA = 100;
     private static final float ANCHO_MUNDO = 1280;
     private static final float ANCHO_JUGADOR = 96;
@@ -222,6 +222,7 @@ public class Player {
                 tiempoSalto = 0;
             }
         }
+        //Gdx.app.log("PUNTOS", "puntos=" + puntos + " mult=" + multiplicador);
     }
 
     public float getTiempoEscudo() {

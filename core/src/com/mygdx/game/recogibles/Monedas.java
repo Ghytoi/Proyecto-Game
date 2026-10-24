@@ -96,7 +96,8 @@ public class Monedas implements ObjetoRecogible {
             player.danar();
         } else {
             player.sumarMoneda();
-            player.sumarPuntos(3); // Cada moneda recolectada suma puntaje e incrementa la adrenalina dinamica
+            //player.sumarPuntos(3); 
+            // Cada moneda recolectada suma puntaje e incrementa la adrenalina dinamica
 
             if (sonido != null) {
                 sonido.play();

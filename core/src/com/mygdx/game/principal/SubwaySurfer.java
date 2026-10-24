@@ -26,10 +26,17 @@ public class SubwaySurfer extends ApplicationAdapter {
     private static final float ANCHO_MUNDO = 1280f;
     private static final float ALTO_MUNDO = 720f;
     private static final float VOLUMEN_MUSICA = 0.3f;
+    
     // Dificultad dinamica progresiva segun el puntaje
     private static final float VELOCIDAD_BASE = 360f;
     private static final float VELOCIDAD_MAXIMA = 880f;
-    private static final float INCREMENTO_POR_PUNTO = 5.2f;
+    
+    private static final float INCREMENTO_POR_PUNTO = 1f;
+    /*
+     * INCREMENTO_POR_PUNTO se usa para saber que incremento
+     * tiene la velocidad respecto a cada punto obtenido
+     */
+    
     private static final float INTERVALO_MINIMO = 0.32f;
     private static final float INTERVALO_MAXIMO = 1.15f;
     private static final float DURACION_GLITCH = 0.40f;
@@ -152,9 +159,31 @@ public class SubwaySurfer extends ApplicationAdapter {
 
             float factorProgreso = (velocidadActual - VELOCIDAD_BASE) / (VELOCIDAD_MAXIMA - VELOCIDAD_BASE);
             factorProgreso = MathUtils.clamp(factorProgreso, 0f, 1f);
+            
+            int nuevoNivel = 1 + (int) (factorProgreso * 1.0f);
+			nuevoNivel = MathUtils.clamp(nuevoNivel, 1, 5);
+			
+            /*
+            int nuevoNivel;
 
-            int nuevoNivel = 1 + (int) (factorProgreso * 4.0f);
-            nuevoNivel = MathUtils.clamp(nuevoNivel, 1, 5);
+            if (factorProgreso < 0.25f) {
+                nuevoNivel = 1;
+            } else if (factorProgreso < 0.45f) {
+                nuevoNivel = 2;
+            } else if (factorProgreso < 0.65f) {
+                nuevoNivel = 3;
+            } else if (factorProgreso < 0.85f) {
+                nuevoNivel = 4;
+            } else {
+                nuevoNivel = 5;
+            }
+            */
+			
+			//Esta código comentado es una opción para 
+            //elegir la dificultad del juego por tramos
+            
+			 
+            
             if (nuevoNivel > nivelDificultad) {
                 nivelDificultad = nuevoNivel;
                 tiempoAlertaNivel = 2.0f;
@@ -246,6 +275,7 @@ public class SubwaySurfer extends ApplicationAdapter {
 
         font.draw(batch, "Puntos: " + player.getPuntos(), 20f, ALTO_MUNDO - 20f);
         font.draw(batch, "Monedas: " + player.getMonedas(), 20f, ALTO_MUNDO - 40f);
+        
         // Vidas representadas con corazones pixel art (sustituyendo texto)
         int vidasActuales = player.getVidas();
         if (texturaCorazon != null) {
@@ -312,13 +342,13 @@ public class SubwaySurfer extends ApplicationAdapter {
         font.draw(
             batch,
             String.format(java.util.Locale.US, "Dificultad: %s", etiquetaNivel),
-            ANCHO_MUNDO - 260f,
+            ANCHO_MUNDO - 190f,
             ALTO_MUNDO - 45f
         );
         font.draw(
             batch,
             String.format(java.util.Locale.US, "Velocidad: %.1fx (%d km/h)", velocidadActual / VELOCIDAD_BASE, (int) (velocidadActual / 5f)),
-            ANCHO_MUNDO - 260f,
+            ANCHO_MUNDO - 182f,
             ALTO_MUNDO - 65f
         );
         font.setColor(Color.WHITE);
