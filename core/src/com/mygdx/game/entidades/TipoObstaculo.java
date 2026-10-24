@@ -2,11 +2,11 @@ package com.mygdx.game.entidades;
 
 /** Catalogo de obstaculos: textura y tamano de cada uno. */
 public enum TipoObstaculo {
-    VAGON("vagon.jpg", 100f, 180f),
-    AUTO("auto.jpg", 100f, 100f),
-    AUTOBUS("autobus.jpg", 100f, 100f),
-    AVION("avion.jpg", 100f, 100f),
-    PAJAROS("pajaros.jpg", 100f, 100f);
+    VAGON("vagon.jpg", 100f, 440f),
+    AUTO("auto.jpg", 90f, 200f),
+    AUTOBUS("autobus.jpg", 100f, 250f),
+    AVION("avion.jpg", 320f, 310f),
+    PAJAROS("pajaros.jpg", 130f, 75f);
 
     private final String rutaTextura;
     private final float ancho;

@@ -11,6 +11,6 @@ public class Avion extends EntidadMovil {
 
     @Override
     protected float getMargenHitbox() {
-        return 0.1f;
+        return 0.20f;
     }
 }
