@@ -88,7 +88,7 @@ public class Player {
         if (texturaGlow == null) {
             texturaGlow = generarTexturaGlow(64);
         }
-        aplicarPotenciadoresIniciales();
+        //aplicarPotenciadoresIniciales();
     }
 
     private Texture generarTexturaGlow(int tamano) {
@@ -145,7 +145,7 @@ public class Player {
         tiempoPuntaje = 0;
         factorVelocidad = 1.0f;
         actualizarCarril();
-        aplicarPotenciadoresIniciales();
+        //aplicarPotenciadoresIniciales();
     }
 
     public void actualizarMovimiento() {
