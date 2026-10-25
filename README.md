@@ -1,58 +1,58 @@
-1. Descripción del proyecto
+1. Descripción del proyecto  
 SubwaySurfer es un videojuego desarrollado en Java utilizando el framework libGDX.
 El proyecto utiliza Gradle para gestionar sus dependencias, compilar el código y ejecutar la aplicación de escritorio.
 
-2. Requisitos previos
+2. Requisitos previos  
 Para instalar y ejecutar el proyecto, se necesita:
 
   - Java JDK 8: versión compatible con la configuración de Gradle del proyecto.
   - Eclipse IDE: recomendado para importar, revisar y ejecutar el código fuente.
   - Gradle Wrapper: incluido en los archivos del proyecto, por lo que no es necesario instalar Gradle manualmente.
 
-3. Instalación del proyecto
+3. Instalación del proyecto  
   - Descargar el .zip del proyecto
   - Descomprimir el archivo .zip
   - Importar el proyecto dentro de eclipse IDE
   - En caso de no poder lanzar el proyecto revisar si el botón de "Run" está configurado,
     ya que en algunos casos este se configura automaticamente tras importar un archivo y en otros no
 
-4. Ejecución del proyecto
-   - Una vez configurado lo básico solo basta con presionar el botón de "Run" dentro de eclipse
-     y el software se ejecutará sin mayor problema
+4. Ejecución del proyecto  
+  - Una vez configurado lo básico solo basta con presionar el botón de "Run" dentro de eclipse
+    y el software se ejecutará sin mayor problema
 
 5. Estructura general del proyecto
-
-   SubwaySurfer/
-   ├── assets/
-   ├── core/
-   │   └── src/
-   │       └── com/
-   │           └──  mygdx/
-   │               └── game/
-   │                  ├── entidades/
-   │                  ├── escenarios/
-   │                  ├── gestion/
-   │                  ├── jugador/
-   │                  ├── movimiento/
-   │                  ├── principal/
-   │                  ├── recogibles/
-   │                  └── recursos/
-   ├── desktop/
-   │   └── src/
-   │       └── com/
-   │           └── mygdx/
-   │               └── game/
-   │                   └── DesktopLauncher.java
-   ├── gradle/
+```text
+   SubwaySurfer/  
+   ├── assets/  
+   ├── core/  
+   │  └── src/  
+   │      └── com/  
+   │          └── mygdx/  
+   │              └── game/  
+   │                  ├── entidades/  
+   │                  ├── escenarios/  
+   │                  ├── gestion/  
+   │                  ├── jugador/  
+   │                  ├── movimiento/  
+   │                  ├── principal/  
+   │                  ├── recogibles/  
+   │                  └── recursos/  
+   ├── desktop/  
+   │   └── src/  
+   │       └── com/  
+   │           └── mygdx/  
+   │               └── game/  
+   │                   └── DesktopLauncher.java  
+   ├── gradle/  
    ├── .gitignore
-   ├── build.gradle
-   ├── gradle.properties
-   ├── gradlew
-   ├── gradlew.bat
-   └── settings.gradle
-
-   assets: contiene los recursos del videojuego, como imágenes, texturas, sonidos, música y otros archivos necesarios para su funcionamiento.
-
+   ├── README.md
+   ├── build.gradle  
+   ├── gradle.properties  
+   ├── gradlew  
+   ├── gradlew.bat  
+   └── settings.gradle  
+```
+- assets: contiene los recursos del videojuego, como imágenes, texturas, sonidos, música y otros archivos necesarios para su funcionamiento.
 - core: contiene la lógica principal del videojuego, organizada en paquetes:
   - entidades: clases que representan las entidades del juego.
   - escenarios: clases relacionadas con los escenarios.
