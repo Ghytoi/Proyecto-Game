@@ -51,7 +51,14 @@ public class Player {
     private float tiempoPuntaje = 0;
     private float factorVelocidad = 1.0f;
     private Texture texturaGlow;
-
+    
+    /*
+     Asigna false la variable "POTENCIADORES_INICIALES" para el juego normal, 
+     Si quieres los PowerUps desde un inicio cambia la variable "POTENCIADORES_INICIALES" a true
+    
+    private static final boolean POTENCIADORES_INICIALES = false;   
+	*/
+    
     public Player(Texture tex, Sound ss) {
         bucketImage = tex;
         sonidoHerido = ss;
@@ -81,6 +88,7 @@ public class Player {
         if (texturaGlow == null) {
             texturaGlow = generarTexturaGlow(64);
         }
+        aplicarPotenciadoresIniciales();
     }
 
     private Texture generarTexturaGlow(int tamano) {
@@ -137,6 +145,7 @@ public class Player {
         tiempoPuntaje = 0;
         factorVelocidad = 1.0f;
         actualizarCarril();
+        aplicarPotenciadoresIniciales();
     }
 
     public void actualizarMovimiento() {
@@ -414,4 +423,18 @@ public class Player {
     public float getFactorVelocidad() {
         return factorVelocidad;
     }
+    
+    /*
+     El método "aplicarPotenciadoresIniciales" se utiliza 
+     para probar los potenciadores desde que se inicia el juego
+     
+    private void aplicarPotenciadoresIniciales() {
+        if (!POTENCIADORES_INICIALES) return;
+        activarEscudo();
+        activarIman();
+        activarEstrella(16);   // x2, x4, x8 o x16
+    }
+    */
+    
+    
 }
